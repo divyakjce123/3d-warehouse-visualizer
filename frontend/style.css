@@ -54,16 +54,24 @@ body {
     min-height: calc(100vh - 130px);
     padding: 20px;
     gap: 20px;
+    align-items: flex-start; /* Prevents sidebar from stretching unnecessarily */
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles - UPDATED */
 .sidebar {
     width: 420px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
     border: 1px solid #e0e0e0;
+    
+    /* UPDATED: Sticky positioning and internal scrolling */
+    position: sticky;
+    top: 90px; /* Below the header */
+    max-height: calc(100vh - 110px); /* Fit within viewport */
+    overflow-y: auto; /* Enable vertical scrolling for settings */
+    overflow-x: hidden;
+    z-index: 90;
 }
 
 .configuration-panel {
@@ -485,6 +493,8 @@ body {
     overflow: hidden;
     border: 1px solid #e0e0e0;
     position: relative;
+    /* Ensure height stretches in flex container */
+    min-height: 500px;
 }
 
 .visualization-header {
@@ -728,8 +738,13 @@ body {
         flex-direction: column;
     }
     
+    /* UPDATED: Mobile/Tablet behavior for sidebar */
     .sidebar {
         width: 100%;
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+        margin-bottom: 20px;
     }
     
     .main-content {
