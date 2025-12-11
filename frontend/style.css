@@ -178,6 +178,7 @@ body {
 
 .collapsible-section.active .section-content {
     max-height: 2000px;
+    overflow-y: scroll;
 }
 
 /* Dimension Buttons Layout */

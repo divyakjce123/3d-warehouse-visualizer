@@ -18,51 +18,42 @@ class ThreeJSVisualizer {
     }
     
     init() {
-        // Create scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf8f9fa);
         
-        // Create camera
         this.camera = new THREE.PerspectiveCamera(
             45,
             this.container.clientWidth / this.container.clientHeight,
             0.1,
-            5000 // Increased far clipping plane
+            5000 
         );
         this.camera.position.set(40, 30, 40);
         
-        // Create renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
         
-        // Add orbit controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 1;
         this.controls.maxDistance = 1000;
         
-        // Add lighting
         this.addLighting();
         
-        // Add grid helper
         this.gridHelper = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
         this.gridHelper.material.opacity = 0.1;
         this.gridHelper.material.transparent = true;
         this.scene.add(this.gridHelper);
         
-        // Add axes helper
         this.axesHelper = new THREE.AxesHelper(10);
         this.scene.add(this.axesHelper);
         
-        // Raycaster for object selection
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
-        // Label container
         this.labelContainer = document.createElement('div');
         this.labelContainer.style.position = 'absolute';
         this.labelContainer.style.top = '0';
@@ -70,9 +61,7 @@ class ThreeJSVisualizer {
         this.labelContainer.style.pointerEvents = 'none';
         this.container.appendChild(this.labelContainer);
         
-        // Create default warehouse walls
         this.createDefaultWalls();
-        
         this.onWindowResize();
     }
     
@@ -98,22 +87,18 @@ class ThreeJSVisualizer {
         
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, 20, wallThickness), wallMaterial);
         backWall.position.set(0, 10, -size);
-        backWall.userData = { type: 'wall', name: 'Back Wall' };
         this.wallMeshes.push(backWall);
         
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, 20, wallThickness), wallMaterial);
         frontWall.position.set(0, 10, size);
-        frontWall.userData = { type: 'wall', name: 'Front Wall' };
         this.wallMeshes.push(frontWall);
         
         const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, 20, size * 2), wallMaterial);
         leftWall.position.set(-size, 10, 0);
-        leftWall.userData = { type: 'wall', name: 'Left Wall' };
         this.wallMeshes.push(leftWall);
         
         const rightWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, 20, size * 2), wallMaterial);
         rightWall.position.set(size, 10, 0);
-        rightWall.userData = { type: 'wall', name: 'Right Wall' };
         this.wallMeshes.push(rightWall);
         
         this.wallMeshes.forEach(wall => {
@@ -129,16 +114,10 @@ class ThreeJSVisualizer {
         const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
         mainLight.position.set(50, 100, 50);
         mainLight.castShadow = true;
-        
         mainLight.shadow.mapSize.width = 2048;
         mainLight.shadow.mapSize.height = 2048;
         mainLight.shadow.camera.near = 0.5;
         mainLight.shadow.camera.far = 500;
-        const shadowSize = 100;
-        mainLight.shadow.camera.left = -shadowSize;
-        mainLight.shadow.camera.right = shadowSize;
-        mainLight.shadow.camera.top = shadowSize;
-        mainLight.shadow.camera.bottom = -shadowSize;
         
         this.scene.add(mainLight);
         
@@ -280,7 +259,6 @@ class ThreeJSVisualizer {
     
     renderWarehouse(layout) {
         this.clearWarehouse();
-        
         const dims = layout.warehouse_dimensions;
         this.createWarehouseFloor(dims);
         
@@ -370,30 +348,17 @@ class ThreeJSVisualizer {
         
         const colorHex = parseInt(color.replace('#', ''), 16);
         
-        const blockGeometry = new THREE.BoxGeometry(
-            dimensions.width,
-            dimensions.height,
-            dimensions.length
-        );
+        const blockGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
         const blockEdges = new THREE.EdgesGeometry(blockGeometry);
-        const blockMaterial = new THREE.LineBasicMaterial({ 
-            color: colorHex,
-            linewidth: 2
-        });
+        const blockMaterial = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
         const blockWireframe = new THREE.LineSegments(blockEdges, blockMaterial);
-        blockWireframe.userData = blockContainer.userData;
         blockContainer.add(blockWireframe);
         
-        const fillMaterial = new THREE.MeshLambertMaterial({
-            color: colorHex,
-            transparent: true,
-            opacity: 0.1
-        });
+        const fillMaterial = new THREE.MeshLambertMaterial({ color: colorHex, transparent: true, opacity: 0.1 });
         const blockFill = new THREE.Mesh(blockGeometry, fillMaterial);
         blockFill.position.y = dimensions.height / 2;
         blockFill.castShadow = true;
         blockFill.receiveShadow = true;
-        blockFill.userData = blockContainer.userData;
         blockContainer.add(blockFill);
         
         this.createLabel(blockId, name, {
@@ -426,13 +391,9 @@ class ThreeJSVisualizer {
             type: 'rack',
             name: rackName,
             blockId: parentBlock.userData.id,
-            rackId: rackId.split('_floor_')[0],
-            floor: floor,
-            row: row,
-            column: column,
+            floor: floor, row: row, column: column,
             dimensions: dimensions,
-            position: position,
-            palletCount: 0
+            position: position
         };
         
         const rackGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
@@ -444,23 +405,16 @@ class ThreeJSVisualizer {
         rackMesh.userData = rackUserData;
         rackContainer.add(rackMesh);
         
-        const shelfThickness = 0.05;
+        // Add shelves visually
         const shelfCount = Math.max(3, Math.floor(dimensions.height / 0.5));
-        
         for (let i = 0; i < shelfCount; i++) {
-            const shelfGeometry = new THREE.BoxGeometry(
-                dimensions.width - 0.1,
-                shelfThickness,
-                dimensions.length - 0.1
-            );
+            const shelfGeometry = new THREE.BoxGeometry(dimensions.width - 0.1, 0.05, dimensions.length - 0.1);
             const shelfMaterial = new THREE.MeshLambertMaterial({ color: 0x718096 });
             const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
-            shelf.position.y = (i * dimensions.height / shelfCount) + (shelfThickness / 2);
-            shelf.castShadow = true;
-            shelf.receiveShadow = true;
+            shelf.position.y = (i * dimensions.height / shelfCount) + 0.025;
             rackContainer.add(shelf);
         }
-        
+
         // Add uprights
         const uprightGeometry = new THREE.BoxGeometry(0.05, dimensions.height, 0.05);
         const uprightMaterial = new THREE.MeshLambertMaterial({ color: 0x4a5568 });
@@ -477,7 +431,7 @@ class ThreeJSVisualizer {
             rackContainer.add(upright);
         });
 
-        // UPDATED: Render Pallet if it exists in the data
+        // IMPORTANT: Create Pallet if data exists
         if (pallet) {
             this.createPallet(pallet, rackContainer);
         }
@@ -491,7 +445,6 @@ class ThreeJSVisualizer {
         
         parentBlock.add(rackContainer);
         this.objects.set(rackId, rackContainer);
-        parentBlock.userData.rackCount = (parentBlock.userData.rackCount || 0) + 1;
     }
     
     createPallet(palletData, parentRack) {
@@ -502,24 +455,19 @@ class ThreeJSVisualizer {
         const mat = new THREE.MeshLambertMaterial({ color: color });
         const mesh = new THREE.Mesh(geo, mat);
         
-        // Calculate rack base height (relative to rack center)
+        // Place on bottom shelf logic
         const rackHeight = parentRack.children[0].geometry.parameters.height;
-        // Place on bottom shelf
-        mesh.position.y = -rackHeight/2 + pDims.height/2 + 0.05;
+        mesh.position.y = -rackHeight/2 + pDims.height/2 + 0.1; // Slightly above bottom
         
-        // Add User Data for selection
         mesh.userData = {
-            id: `pallet_${Math.random().toString(36).substr(2, 9)}`,
+            id: `pallet_${Math.random()}`,
             type: 'pallet',
             name: `Pallet (${palletData.type})`,
-            palletType: palletData.type,
-            weight: palletData.weight,
             originalEmissive: 0x000000
         };
         
         parentRack.add(mesh);
         
-        // Stock
         if(palletData.stock) {
             const sDims = palletData.stock.dimensions;
             const sColor = parseInt(palletData.stock.color.replace('#', ''), 16);
@@ -537,9 +485,7 @@ class ThreeJSVisualizer {
         if (!this.labelsVisible) return;
         
         const existingLabel = document.getElementById(`label-${objectId}`);
-        if (existingLabel) {
-            this.labelContainer.removeChild(existingLabel);
-        }
+        if (existingLabel) existingLabel.remove();
         
         const label = document.createElement('div');
         label.id = `label-${objectId}`;
@@ -583,138 +529,62 @@ class ThreeJSVisualizer {
             if (label) {
                 const worldPosition = new THREE.Vector3();
                 object.getWorldPosition(worldPosition);
-                
-                if (object.userData.type === 'block') {
-                    worldPosition.y += object.userData.dimensions.height + 0.5;
-                } else if (object.userData.type === 'rack') {
-                    worldPosition.y += object.userData.dimensions.height + 0.3;
-                }
-                
+                if (object.userData.type === 'block') worldPosition.y += object.userData.dimensions.height + 0.5;
+                else if (object.userData.type === 'rack') worldPosition.y += object.userData.dimensions.height + 0.3;
                 this.updateLabelPosition(label, worldPosition);
             }
         });
     }
     
     convertToMeters(value, unit) {
-        const conversions = {
-            'cm': 0.01,
-            'm': 1,
-            'km': 1000,
-            'in': 0.0254,
-            'ft': 0.3048,
-            'yd': 0.9144,
-            'mi': 1609.34
-        };
+        const conversions = { 'cm': 0.01, 'm': 1, 'km': 1000, 'in': 0.0254, 'ft': 0.3048 };
         return value * (conversions[unit] || 1);
     }
     
     clearWarehouse() {
-        this.objects.forEach((object, id) => {
-            this.scene.remove(object);
+        this.objects.forEach((obj, id) => {
+            this.scene.remove(obj);
             const label = document.getElementById(`label-${id}`);
-            if (label) {
-                this.labelContainer.removeChild(label);
-            }
+            if (label) label.remove();
         });
-        
         this.objects.clear();
         this.deselectObject();
     }
     
     clearScene() {
         this.clearWarehouse();
-        
-        const objectsToRemove = [];
-        this.scene.children.forEach(child => {
-            if (child !== this.gridHelper && child !== this.axesHelper && 
-                !(child instanceof THREE.Light) && 
-                !this.wallMeshes.includes(child) &&
-                child.userData.type !== 'floor') {
-                objectsToRemove.push(child);
-            }
-        });
-        
-        objectsToRemove.forEach(object => {
-            this.scene.remove(object);
-        });
-        
+        // Remove everything except lights and helpers
+        const toRemove = this.scene.children.filter(c => 
+            c !== this.gridHelper && c !== this.axesHelper && !(c instanceof THREE.Light) && !this.wallMeshes.includes(c)
+        );
+        toRemove.forEach(o => this.scene.remove(o));
         this.labelContainer.innerHTML = '';
         this.resetView();
     }
     
-    toggleGrid() {
-        this.gridVisible = !this.gridVisible;
-        this.gridHelper.visible = this.gridVisible;
+    toggleGrid() { this.gridHelper.visible = !this.gridHelper.visible; }
+    toggleLabels() { 
+        this.labelsVisible = !this.labelsVisible; 
+        this.labelContainer.style.display = this.labelsVisible ? 'block' : 'none'; 
+    }
+    toggleWalls() { 
+        this.wallsVisible = !this.wallsVisible; 
+        this.wallMeshes.forEach(w => w.visible = this.wallsVisible); 
     }
     
-    toggleLabels() {
-        this.labelsVisible = !this.labelsVisible;
-        this.labelContainer.style.display = this.labelsVisible ? 'block' : 'none';
-    }
-    
-    toggleWalls() {
-        this.wallsVisible = !this.wallsVisible;
-        this.wallMeshes.forEach(wall => {
-            wall.visible = this.wallsVisible;
-        });
-    }
-    
-    zoomIn() {
-        this.camera.position.multiplyScalar(0.9);
-        this.controls.update();
-    }
-    
-    zoomOut() {
-        this.camera.position.multiplyScalar(1.1);
-        this.controls.update();
-    }
-    
-    rotateLeft() {
-        this.controls.rotateLeft(Math.PI / 8);
-    }
-    
-    rotateRight() {
-        this.controls.rotateRight(Math.PI / 8);
-    }
-    
-    resetView() {
-        this.camera.position.set(40, 30, 40);
-        this.controls.reset();
-    }
-    
-    setTopView() {
-        this.camera.position.set(0, 100, 0);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.update();
-    }
-    
-    setFrontView() {
-        this.camera.position.set(0, 30, 100);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.update();
-    }
-    
-    setSideView() {
-        this.camera.position.set(100, 30, 0);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.update();
-    }
-    
-    setInteractionMode(mode) {
-        this.interactionMode = mode;
-    }
+    zoomIn() { this.camera.position.multiplyScalar(0.9); this.controls.update(); }
+    zoomOut() { this.camera.position.multiplyScalar(1.1); this.controls.update(); }
+    resetView() { this.camera.position.set(40, 30, 40); this.controls.reset(); }
+    setTopView() { this.camera.position.set(0, 100, 0); this.camera.lookAt(0,0,0); this.controls.update(); }
+    setFrontView() { this.camera.position.set(0, 30, 100); this.camera.lookAt(0,0,0); this.controls.update(); }
+    setSideView() { this.camera.position.set(100, 30, 0); this.camera.lookAt(0,0,0); this.controls.update(); }
+    setInteractionMode(mode) { this.interactionMode = mode; }
     
     animate() {
         requestAnimationFrame(() => this.animate());
-        if (this.controls) {
-            this.controls.update();
-        }
-        if (this.labelsVisible) {
-            this.updateLabels();
-        }
-        if (this.renderer && this.scene && this.camera) {
-            this.renderer.render(this.scene, this.camera);
-        }
+        if (this.controls) this.controls.update();
+        if (this.labelsVisible) this.updateLabels();
+        if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
     }
 }
 
