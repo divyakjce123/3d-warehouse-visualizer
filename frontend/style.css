@@ -22,9 +22,12 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 100;
+    left: 0;
+    right: 0;
+    height: 70px;
+    z-index: 1000;
 }
 
 .logo {
@@ -51,27 +54,25 @@ body {
 /* Main Container */
 .container {
     display: flex;
-    min-height: calc(100vh - 130px);
-    padding: 20px;
-    gap: 20px;
-    align-items: flex-start; /* Prevents sidebar from stretching unnecessarily */
+    margin-top: 70px; /* Header height */
+    min-height: calc(100vh - 70px);
 }
 
-/* Sidebar Styles - UPDATED */
+/* Sidebar Styles - Fixed Position */
 .sidebar {
-    width: 420px;
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    bottom: 20px;
+    width: 400px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #e0e0e0;
-    
-    /* UPDATED: Sticky positioning and internal scrolling */
-    position: sticky;
-    top: 90px; /* Below the header */
-    max-height: calc(100vh - 110px); /* Fit within viewport */
-    overflow-y: auto; /* Enable vertical scrolling for settings */
-    overflow-x: hidden;
+    overflow-y: auto; /* Independent scrolling */
     z-index: 90;
+    scrollbar-width: thin;
+    scrollbar-color: #ff5252 #f1f1f1;
 }
 
 .configuration-panel {
@@ -189,10 +190,12 @@ body {
 .dimension-row {
     display: flex;
     gap: 15px;
+    flex-wrap: wrap; /* WRAP FIX */
 }
 
 .dimension-button-group {
     flex: 1;
+    min-width: 140px; /* WRAP FIX */
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -265,7 +268,11 @@ body {
     font-weight: 500;
     color: #d32f2f;
     cursor: pointer;
+    /* DROPDOWN APPEARANCE FIX */
     appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23d32f2f' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 15px center;
@@ -277,7 +284,7 @@ body {
     background-color: #fff5f5;
 }
 
-/* Number Input Button (without unit) */
+/* Number Input Button */
 .number-input-button {
     display: flex;
     background: white;
@@ -338,7 +345,11 @@ body {
     color: #333;
     background: transparent;
     cursor: pointer;
+    /* DROPDOWN APPEARANCE FIX */
     appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23d32f2f' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 15px center;
@@ -349,22 +360,20 @@ body {
     outline: none;
 }
 
-/* Sub Sections */
+/* Add this if missing */
 .sub-section {
-    background: #f8f9fa;
+    background: #f1f3f5;
     padding: 15px;
+    margin-top: 15px;
     border-radius: 8px;
-    margin-top: 20px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #dee2e6;
 }
-
 .sub-section h4 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ced4da;
+    padding-bottom: 5px;
 }
 
 /* Action Row */
@@ -482,9 +491,13 @@ body {
     margin-bottom: 8px;
 }
 
-/* Main Content - 3D Visualization */
+/* Main Content - Pushed by fixed sidebar */
 .main-content {
     flex: 1;
+    margin-left: 440px; /* Sidebar width + margins */
+    margin-right: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     background: white;
@@ -493,8 +506,7 @@ body {
     overflow: hidden;
     border: 1px solid #e0e0e0;
     position: relative;
-    /* Ensure height stretches in flex container */
-    min-height: 500px;
+    height: calc(100vh - 110px);
 }
 
 .visualization-header {
@@ -570,8 +582,9 @@ body {
 #3d-container {
     flex: 1;
     position: relative;
-    min-height: 500px;
     background: #f8f9fa;
+    width: 100%;
+    min-height: 400px;
 }
 
 /* Loading Overlay */
@@ -725,6 +738,8 @@ body {
     text-align: center;
     padding: 15px;
     font-size: 14px;
+    position: relative;
+    z-index: 200;
 }
 
 .footer i {
@@ -734,21 +749,23 @@ body {
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-    .container {
-        flex-direction: column;
-    }
-    
-    /* UPDATED: Mobile/Tablet behavior for sidebar */
     .sidebar {
-        width: 100%;
         position: static;
-        max-height: none;
-        overflow-y: visible;
+        width: 100%;
+        height: auto;
+        overflow: visible;
         margin-bottom: 20px;
     }
     
     .main-content {
+        margin-left: 0;
+        margin-right: 0;
         height: 600px;
+    }
+    
+    .container {
+        flex-direction: column;
+        padding: 20px;
     }
 }
 
@@ -757,6 +774,12 @@ body {
         flex-direction: column;
         text-align: center;
         gap: 10px;
+        height: auto;
+        position: static;
+    }
+    
+    .container {
+        margin-top: 0;
     }
     
     .dimension-row {
@@ -818,7 +841,7 @@ body {
     padding: 15px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    z-index: 2000;
     animation: slideIn 0.3s ease-out;
     color: white;
     font-weight: 500;

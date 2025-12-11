@@ -27,7 +27,7 @@ class ThreeJSVisualizer {
             45,
             this.container.clientWidth / this.container.clientHeight,
             0.1,
-            1000
+            5000 // Increased far clipping plane
         );
         this.camera.position.set(40, 30, 40);
         
@@ -42,14 +42,14 @@ class ThreeJSVisualizer {
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 5;
-        this.controls.maxDistance = 200;
+        this.controls.minDistance = 1;
+        this.controls.maxDistance = 1000;
         
         // Add lighting
         this.addLighting();
         
         // Add grid helper
-        this.gridHelper = new THREE.GridHelper(100, 20, 0x000000, 0x000000);
+        this.gridHelper = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
         this.gridHelper.material.opacity = 0.1;
         this.gridHelper.material.transparent = true;
         this.scene.add(this.gridHelper);
@@ -72,10 +72,11 @@ class ThreeJSVisualizer {
         
         // Create default warehouse walls
         this.createDefaultWalls();
+        
+        this.onWindowResize();
     }
     
     createDefaultWalls() {
-        // Create transparent walls for reference
         const wallMaterial = new THREE.MeshLambertMaterial({ 
             color: 0xcccccc,
             transparent: true,
@@ -83,8 +84,7 @@ class ThreeJSVisualizer {
             side: THREE.DoubleSide
         });
         
-        // Floor
-        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorGeometry = new THREE.PlaneGeometry(200, 200);
         const floor = new THREE.Mesh(floorGeometry, wallMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -0.1;
@@ -92,39 +92,27 @@ class ThreeJSVisualizer {
         floor.userData = { type: 'floor', name: 'Floor' };
         this.scene.add(floor);
         
-        // Reference walls (only visible when enabled)
         this.wallMeshes = [];
         const wallThickness = 0.2;
+        const size = 100;
         
-        // Back wall
-        const backWallGeometry = new THREE.BoxGeometry(100, 20, wallThickness);
-        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
-        backWall.position.z = -50;
-        backWall.position.y = 10;
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, 20, wallThickness), wallMaterial);
+        backWall.position.set(0, 10, -size);
         backWall.userData = { type: 'wall', name: 'Back Wall' };
         this.wallMeshes.push(backWall);
         
-        // Front wall
-        const frontWallGeometry = new THREE.BoxGeometry(100, 20, wallThickness);
-        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
-        frontWall.position.z = 50;
-        frontWall.position.y = 10;
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, 20, wallThickness), wallMaterial);
+        frontWall.position.set(0, 10, size);
         frontWall.userData = { type: 'wall', name: 'Front Wall' };
         this.wallMeshes.push(frontWall);
         
-        // Left wall
-        const leftWallGeometry = new THREE.BoxGeometry(wallThickness, 20, 100);
-        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
-        leftWall.position.x = -50;
-        leftWall.position.y = 10;
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, 20, size * 2), wallMaterial);
+        leftWall.position.set(-size, 10, 0);
         leftWall.userData = { type: 'wall', name: 'Left Wall' };
         this.wallMeshes.push(leftWall);
         
-        // Right wall
-        const rightWallGeometry = new THREE.BoxGeometry(wallThickness, 20, 100);
-        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
-        rightWall.position.x = 50;
-        rightWall.position.y = 10;
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, 20, size * 2), wallMaterial);
+        rightWall.position.set(size, 10, 0);
         rightWall.userData = { type: 'wall', name: 'Right Wall' };
         this.wallMeshes.push(rightWall);
         
@@ -135,41 +123,39 @@ class ThreeJSVisualizer {
     }
     
     addLighting() {
-        // Ambient light
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
         
-        // Directional light (main light)
         const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
         mainLight.position.set(50, 100, 50);
         mainLight.castShadow = true;
-        mainLight.shadow.camera.left = -50;
-        mainLight.shadow.camera.right = 50;
-        mainLight.shadow.camera.top = 50;
-        mainLight.shadow.camera.bottom = -50;
+        
         mainLight.shadow.mapSize.width = 2048;
         mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 500;
+        const shadowSize = 100;
+        mainLight.shadow.camera.left = -shadowSize;
+        mainLight.shadow.camera.right = shadowSize;
+        mainLight.shadow.camera.top = shadowSize;
+        mainLight.shadow.camera.bottom = -shadowSize;
+        
         this.scene.add(mainLight);
         
-        // Fill light
         const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
         fillLight.position.set(-50, 30, -50);
         this.scene.add(fillLight);
         
-        // Back light
         const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
         backLight.position.set(0, 20, -100);
         this.scene.add(backLight);
     }
     
     setupEventListeners() {
-        // Window resize
         window.addEventListener('resize', () => this.onWindowResize());
         
-        // Mouse events for object selection
         this.renderer.domElement.addEventListener('click', (event) => this.onMouseClick(event));
         
-        // Mouse events for dragging
         let isDragging = false;
         let dragStart = { x: 0, y: 0 };
         
@@ -186,14 +172,12 @@ class ThreeJSVisualizer {
                 const deltaX = event.clientX - dragStart.x;
                 const deltaY = event.clientY - dragStart.y;
                 
-                // Update object position based on mouse movement
                 this.selectedObject.position.x += deltaX * 0.01;
                 this.selectedObject.position.z -= deltaY * 0.01;
                 
                 dragStart.x = event.clientX;
                 dragStart.y = event.clientY;
                 
-                // Update label position
                 this.updateLabels();
             }
         });
@@ -202,31 +186,26 @@ class ThreeJSVisualizer {
             isDragging = false;
         });
         
-        // Prevent context menu on right click
         this.renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
     }
     
     onWindowResize() {
+        if (!this.container || !this.camera || !this.renderer) return;
         this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     }
     
     onMouseClick(event) {
-        // Calculate mouse position in normalized device coordinates
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         
-        // Update the picking ray with the camera and mouse position
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        
-        // Calculate objects intersecting the picking ray
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
         
         if (intersects.length > 0) {
             const object = intersects[0].object;
-            
             if (this.interactionMode === 'delete') {
                 this.deleteObject(object);
             } else {
@@ -238,12 +217,10 @@ class ThreeJSVisualizer {
     }
     
     selectObject(object) {
-        // Deselect previous object
         if (this.selectedObject) {
             this.selectedObject.material.emissive.setHex(this.selectedObject.userData.originalEmissive);
         }
         
-        // Find parent with userData
         let selectableObject = object;
         while (selectableObject && !selectableObject.userData.id) {
             selectableObject = selectableObject.parent;
@@ -252,13 +229,11 @@ class ThreeJSVisualizer {
         if (selectableObject && selectableObject.userData.id) {
             this.selectedObject = selectableObject;
             
-            // Highlight selected object
             if (selectableObject.material) {
                 selectableObject.userData.originalEmissive = selectableObject.material.emissive.getHex();
                 selectableObject.material.emissive.setHex(0xff5252);
             }
             
-            // Update app with selected object info
             if (window.warehouseApp) {
                 window.warehouseApp.updateSelectedInfo(selectableObject.userData);
             }
@@ -288,18 +263,15 @@ class ThreeJSVisualizer {
             this.scene.remove(deletableObject);
             this.objects.delete(deletableObject.userData.id);
             
-            // Remove label if exists
             const label = document.getElementById(`label-${deletableObject.userData.id}`);
             if (label) {
                 this.labelContainer.removeChild(label);
             }
             
-            // If this was the selected object, deselect it
             if (this.selectedObject === deletableObject) {
                 this.deselectObject();
             }
             
-            // Show notification
             if (window.warehouseApp) {
                 window.warehouseApp.showNotification(`${deletableObject.userData.name} deleted`, 'success');
             }
@@ -307,20 +279,51 @@ class ThreeJSVisualizer {
     }
     
     renderWarehouse(layout) {
-        // Clear existing warehouse
         this.clearWarehouse();
         
-        // Create warehouse floor based on dimensions
         const dims = layout.warehouse_dimensions;
         this.createWarehouseFloor(dims);
         
-        // Create blocks
         layout.blocks.forEach(block => {
             this.createBlock(block);
         });
         
-        // Update labels
         this.updateLabels();
+        this.onWindowResize();
+        this.fitCameraToScene(); 
+    }
+    
+    fitCameraToScene() {
+        if (this.objects.size === 0) {
+            this.resetView();
+            return;
+        }
+
+        const box = new THREE.Box3();
+        this.objects.forEach(object => {
+            box.expandByObject(object);
+        });
+
+        const floor = this.scene.children.find(c => c.userData && c.userData.type === 'warehouse-floor');
+        if (floor) {
+            box.expandByObject(floor);
+        }
+
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = this.camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+        cameraZ *= 1.2;
+
+        const direction = new THREE.Vector3(1, 0.8, 1).normalize();
+        const position = direction.multiplyScalar(cameraZ).add(center);
+
+        this.camera.position.copy(position);
+        this.camera.lookAt(center);
+        this.controls.target.copy(center);
+        this.controls.update();
     }
     
     createWarehouseFloor(dimensions) {
@@ -337,12 +340,20 @@ class ThreeJSVisualizer {
         floor.receiveShadow = true;
         floor.userData = { type: 'warehouse-floor', name: 'Warehouse Floor' };
         this.scene.add(floor);
+        
+        const gridSize = Math.max(200, Math.max(width, length) * 2);
+        const divisions = Math.floor(gridSize / 5);
+        
+        this.scene.remove(this.gridHelper);
+        this.gridHelper = new THREE.GridHelper(gridSize, divisions, 0x000000, 0x000000);
+        this.gridHelper.material.opacity = 0.1;
+        this.gridHelper.material.transparent = true;
+        this.scene.add(this.gridHelper);
     }
     
     createBlock(blockData) {
         const { position, dimensions, color, name, racks } = blockData;
         
-        // Create block container
         const blockContainer = new THREE.Group();
         blockContainer.position.set(position.x, position.y, position.z);
         
@@ -357,7 +368,8 @@ class ThreeJSVisualizer {
             rackCount: racks ? racks.length : 0
         };
         
-        // Create block outline (wireframe)
+        const colorHex = parseInt(color.replace('#', ''), 16);
+        
         const blockGeometry = new THREE.BoxGeometry(
             dimensions.width,
             dimensions.height,
@@ -365,16 +377,15 @@ class ThreeJSVisualizer {
         );
         const blockEdges = new THREE.EdgesGeometry(blockGeometry);
         const blockMaterial = new THREE.LineBasicMaterial({ 
-            color: parseInt(color.replace('#', '0x'), 16),
+            color: colorHex,
             linewidth: 2
         });
         const blockWireframe = new THREE.LineSegments(blockEdges, blockMaterial);
         blockWireframe.userData = blockContainer.userData;
         blockContainer.add(blockWireframe);
         
-        // Create transparent fill for better selection
         const fillMaterial = new THREE.MeshLambertMaterial({
-            color: parseInt(color.replace('#', '0x'), 16),
+            color: colorHex,
             transparent: true,
             opacity: 0.1
         });
@@ -385,14 +396,12 @@ class ThreeJSVisualizer {
         blockFill.userData = blockContainer.userData;
         blockContainer.add(blockFill);
         
-        // Create block label
         this.createLabel(blockId, name, {
             x: position.x,
             y: position.y + dimensions.height + 0.5,
             z: position.z
         });
         
-        // Create racks if they exist
         if (racks && racks.length > 0) {
             racks.forEach(rack => {
                 this.createRack(rack, blockContainer);
@@ -404,15 +413,10 @@ class ThreeJSVisualizer {
     }
     
     createRack(rackData, parentBlock) {
-        const { position, dimensions, floor, row, column } = rackData;
+        const { position, dimensions, floor, row, column, pallet } = rackData;
         
-        // Create rack container
         const rackContainer = new THREE.Group();
-        rackContainer.position.set(
-            position.x,
-            position.y,
-            position.z
-        );
+        rackContainer.position.set(position.x, position.y, position.z);
         
         const rackId = rackData.id;
         const rackName = `Rack F${floor}R${row}C${column}`;
@@ -431,17 +435,8 @@ class ThreeJSVisualizer {
             palletCount: 0
         };
         
-        // Create rack frame
-        const rackGeometry = new THREE.BoxGeometry(
-            dimensions.width,
-            dimensions.height,
-            dimensions.length
-        );
-        const rackMaterial = new THREE.MeshLambertMaterial({ 
-            color: 0x2c5282,
-            transparent: true,
-            opacity: 0.7
-        });
+        const rackGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
+        const rackMaterial = new THREE.MeshLambertMaterial({ color: 0x2c5282, transparent: true, opacity: 0.7 });
         const rackMesh = new THREE.Mesh(rackGeometry, rackMaterial);
         rackMesh.position.y = dimensions.height / 2;
         rackMesh.castShadow = true;
@@ -449,7 +444,6 @@ class ThreeJSVisualizer {
         rackMesh.userData = rackUserData;
         rackContainer.add(rackMesh);
         
-        // Create rack shelves
         const shelfThickness = 0.05;
         const shelfCount = Math.max(3, Math.floor(dimensions.height / 0.5));
         
@@ -467,10 +461,9 @@ class ThreeJSVisualizer {
             rackContainer.add(shelf);
         }
         
-        // Create rack uprights
+        // Add uprights
         const uprightGeometry = new THREE.BoxGeometry(0.05, dimensions.height, 0.05);
         const uprightMaterial = new THREE.MeshLambertMaterial({ color: 0x4a5568 });
-        
         const positions = [
             { x: -dimensions.width/2 + 0.025, z: -dimensions.length/2 + 0.025 },
             { x: dimensions.width/2 - 0.025, z: -dimensions.length/2 + 0.025 },
@@ -481,11 +474,14 @@ class ThreeJSVisualizer {
         positions.forEach(pos => {
             const upright = new THREE.Mesh(uprightGeometry, uprightMaterial);
             upright.position.set(pos.x, dimensions.height/2, pos.z);
-            upright.castShadow = true;
             rackContainer.add(upright);
         });
+
+        // UPDATED: Render Pallet if it exists in the data
+        if (pallet) {
+            this.createPallet(pallet, rackContainer);
+        }
         
-        // Create rack label
         const labelPosition = {
             x: parentBlock.position.x + position.x,
             y: position.y + dimensions.height + 0.3,
@@ -495,21 +491,56 @@ class ThreeJSVisualizer {
         
         parentBlock.add(rackContainer);
         this.objects.set(rackId, rackContainer);
-        
-        // Update parent block rack count
         parentBlock.userData.rackCount = (parentBlock.userData.rackCount || 0) + 1;
+    }
+    
+    createPallet(palletData, parentRack) {
+        const pDims = palletData.dimensions;
+        const color = parseInt(palletData.color.replace('#', ''), 16);
+        
+        const geo = new THREE.BoxGeometry(pDims.width, pDims.height, pDims.length);
+        const mat = new THREE.MeshLambertMaterial({ color: color });
+        const mesh = new THREE.Mesh(geo, mat);
+        
+        // Calculate rack base height (relative to rack center)
+        const rackHeight = parentRack.children[0].geometry.parameters.height;
+        // Place on bottom shelf
+        mesh.position.y = -rackHeight/2 + pDims.height/2 + 0.05;
+        
+        // Add User Data for selection
+        mesh.userData = {
+            id: `pallet_${Math.random().toString(36).substr(2, 9)}`,
+            type: 'pallet',
+            name: `Pallet (${palletData.type})`,
+            palletType: palletData.type,
+            weight: palletData.weight,
+            originalEmissive: 0x000000
+        };
+        
+        parentRack.add(mesh);
+        
+        // Stock
+        if(palletData.stock) {
+            const sDims = palletData.stock.dimensions;
+            const sColor = parseInt(palletData.stock.color.replace('#', ''), 16);
+            
+            const sGeo = new THREE.BoxGeometry(sDims.width, sDims.height, sDims.length);
+            const sMat = new THREE.MeshLambertMaterial({ color: sColor });
+            const sMesh = new THREE.Mesh(sGeo, sMat);
+            sMesh.position.y = mesh.position.y + pDims.height/2 + sDims.height/2;
+            
+            parentRack.add(sMesh);
+        }
     }
     
     createLabel(objectId, text, position) {
         if (!this.labelsVisible) return;
         
-        // Remove existing label if any
         const existingLabel = document.getElementById(`label-${objectId}`);
         if (existingLabel) {
             this.labelContainer.removeChild(existingLabel);
         }
         
-        // Create new label
         const label = document.createElement('div');
         label.id = `label-${objectId}`;
         label.className = 'object-label';
@@ -553,7 +584,6 @@ class ThreeJSVisualizer {
                 const worldPosition = new THREE.Vector3();
                 object.getWorldPosition(worldPosition);
                 
-                // Adjust height for labels
                 if (object.userData.type === 'block') {
                     worldPosition.y += object.userData.dimensions.height + 0.5;
                 } else if (object.userData.type === 'rack') {
@@ -563,75 +593,6 @@ class ThreeJSVisualizer {
                 this.updateLabelPosition(label, worldPosition);
             }
         });
-    }
-    
-    createPallet(palletData, parentRack) {
-        const { type, color, dimensions, stock } = palletData;
-        
-        // Create pallet container
-        const palletContainer = new THREE.Group();
-        palletContainer.userData = {
-            id: palletData.id,
-            type: 'pallet',
-            name: `Pallet ${palletData.id.replace('pallet_', '')}`,
-            palletType: type,
-            stockType: stock?.type,
-            dimensions: dimensions,
-            color: color,
-            blockId: parentRack.userData.blockId,
-            rackId: parentRack.userData.rackId
-        };
-        
-        // Create pallet base
-        const palletGeometry = new THREE.BoxGeometry(
-            this.convertToMeters(dimensions.width, dimensions.unit),
-            this.convertToMeters(dimensions.height, dimensions.unit),
-            this.convertToMeters(dimensions.length, dimensions.unit)
-        );
-        const palletMaterial = new THREE.MeshLambertMaterial({ 
-            color: parseInt(color.replace('#', '0x'), 16)
-        });
-        const pallet = new THREE.Mesh(palletGeometry, palletMaterial);
-        pallet.castShadow = true;
-        pallet.receiveShadow = true;
-        pallet.userData = palletContainer.userData;
-        palletContainer.add(pallet);
-        
-        // Create stock on pallet
-        if (stock && stock.dimensions) {
-            const stockGeometry = new THREE.BoxGeometry(
-                this.convertToMeters(stock.dimensions.width, stock.dimensions.unit),
-                this.convertToMeters(stock.dimensions.height, stock.dimensions.unit),
-                this.convertToMeters(stock.dimensions.length, stock.dimensions.unit)
-            );
-            const stockMaterial = new THREE.MeshLambertMaterial({ 
-                color: parseInt(stock.color.replace('#', '0x'), 16)
-            });
-            const stockMesh = new THREE.Mesh(stockGeometry, stockMaterial);
-            stockMesh.position.y = this.convertToMeters(dimensions.height, dimensions.unit) / 2 + 
-                                  this.convertToMeters(stock.dimensions.height, stock.dimensions.unit) / 2;
-            stockMesh.castShadow = true;
-            stockMesh.receiveShadow = true;
-            palletContainer.add(stockMesh);
-        }
-        
-        // Position pallet randomly within rack
-        const rackDims = parentRack.userData.dimensions;
-        const palletWidth = this.convertToMeters(dimensions.width, dimensions.unit);
-        const palletLength = this.convertToMeters(dimensions.length, dimensions.unit);
-        
-        const maxX = (rackDims.width - palletWidth) / 2;
-        const maxZ = (rackDims.length - palletLength) / 2;
-        
-        palletContainer.position.x = (Math.random() - 0.5) * maxX * 0.8;
-        palletContainer.position.z = (Math.random() - 0.5) * maxZ * 0.8;
-        palletContainer.position.y = this.convertToMeters(dimensions.height, dimensions.unit) / 2;
-        
-        parentRack.add(palletContainer);
-        this.objects.set(palletData.id, palletContainer);
-        
-        // Update rack pallet count
-        parentRack.userData.palletCount = (parentRack.userData.palletCount || 0) + 1;
     }
     
     convertToMeters(value, unit) {
@@ -648,11 +609,8 @@ class ThreeJSVisualizer {
     }
     
     clearWarehouse() {
-        // Remove all warehouse objects but keep helpers and walls
         this.objects.forEach((object, id) => {
             this.scene.remove(object);
-            
-            // Remove label
             const label = document.getElementById(`label-${id}`);
             if (label) {
                 this.labelContainer.removeChild(label);
@@ -666,7 +624,6 @@ class ThreeJSVisualizer {
     clearScene() {
         this.clearWarehouse();
         
-        // Remove floor but keep other helpers
         const objectsToRemove = [];
         this.scene.children.forEach(child => {
             if (child !== this.gridHelper && child !== this.axesHelper && 
@@ -681,8 +638,8 @@ class ThreeJSVisualizer {
             this.scene.remove(object);
         });
         
-        // Clear labels
         this.labelContainer.innerHTML = '';
+        this.resetView();
     }
     
     toggleGrid() {
@@ -749,25 +706,18 @@ class ThreeJSVisualizer {
     
     animate() {
         requestAnimationFrame(() => this.animate());
-        
-        // Update controls
         if (this.controls) {
             this.controls.update();
         }
-        
-        // Update labels
         if (this.labelsVisible) {
             this.updateLabels();
         }
-        
-        // Render scene
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
     }
 }
 
-// Initialize visualizer when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer = new ThreeJSVisualizer('3d-container');
 });
