@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Warehouse Layout Planner</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-warehouse"></i>
+            <h1>Warehouse 3D Layout Planner</h1>
+        </div>
+        <div class="header-info">
+            <p>Design your warehouse layout in 3D</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Configuration Panel -->
+        <div class="sidebar">
+            <div class="configuration-panel">
+                <h2><i class="fas fa-cogs"></i> Configuration Panel</h2>
+                
+                <!-- Generate Layout Button -->
+                <div class="generate-section">
+                    <button id="generate-layout-btn" class="btn btn-primary btn-large">
+                        <i class="fas fa-magic"></i> GENERATE 3D LAYOUT
+                    </button>
+                    <p class="helper-text">Configure all dimensions below and click to generate</p>
+                </div>
+                
+                <!-- Collapsible Sections -->
+                <div class="collapsible-section active">
+                    <div class="section-header">
+                        <h3><i class="fas fa-building"></i> 1. Warehouse Dimensions</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="dimension-buttons">
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-ruler-vertical"></i>
+                                        <span>Length</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="warehouse-length" value="50" step="0.1" min="1">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                                <option value="km">km</option>
+                                                <option value="in">in</option>
+                                                <option value="ft">ft</option>
+                                                <option value="yd">yd</option>
+                                                <option value="mi">mi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-ruler-horizontal"></i>
+                                        <span>Width</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="warehouse-width" value="30" step="0.1" min="1">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                                <option value="km">km</option>
+                                                <option value="in">in</option>
+                                                <option value="ft">ft</option>
+                                                <option value="yd">yd</option>
+                                                <option value="mi">mi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-arrows-alt-v"></i>
+                                        <span>Height</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="warehouse-height" value="10" step="0.1" min="1">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                                <option value="km">km</option>
+                                                <option value="in">in</option>
+                                                <option value="ft">ft</option>
+                                                <option value="yd">yd</option>
+                                                <option value="mi">mi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-th-large"></i> 2. Blocks Configuration</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="dimension-buttons">
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-cube"></i>
+                                        <span>Number of Blocks</span>
+                                    </div>
+                                    <div class="number-input-button">
+                                        <input type="number" id="num-blocks" value="3" min="1" max="10">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-arrows-alt-h"></i>
+                                        <span>Gap Between Blocks (Width)</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="block-gap-width" value="1" step="0.1" min="0">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                                <option value="in">in</option>
+                                                <option value="ft">ft</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-arrows-alt-h"></i>
+                                        <span>Gap Between Blocks (Length)</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="block-gap-length" value="1" step="0.1" min="0">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                                <option value="in">in</option>
+                                                <option value="ft">ft</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-sitemap"></i> 3. Racks Configuration</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="dimension-buttons">
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>Number of Floors</span>
+                                    </div>
+                                    <div class="number-input-button">
+                                        <input type="number" id="num-floors" value="3" min="1" max="10">
+                                    </div>
+                                </div>
+
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-arrows-alt-v"></i>
+                                        <span>Gap Between Floors</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="floor-gap" value="0.3" step="0.1" min="0">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-border-all"></i>
+                                        <span>Number of Racks</span>
+                                    </div>
+                                    <div class="number-input-button">
+                                        <input type="number" id="num-racks" value="6" min="1" max="20">
+                                    </div>
+                                </div>
+
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-grip-lines"></i>
+                                        <span>Number of Rows</span>
+                                    </div>
+                                    <div class="number-input-button">
+                                        <input type="number" id="num-rows" value="2" min="1" max="5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-arrows-alt-h"></i>
+                                        <span>Gap Between Racks</span>
+                                    </div>
+                                    <div class="dimension-input-button">
+                                        <input type="number" id="rack-gap" value="0.5" step="0.1" min="0">
+                                        <div class="unit-dropdown">
+                                            <select class="unit-select">
+                                                <option value="m">m</option>
+                                                <option value="cm">cm</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sub-section">
+                            <h4><i class="fas fa-wall"></i> Wall Gaps Configuration</h4>
+                            <div class="dimension-buttons">
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-door-closed"></i>
+                                            <span>Front Wall Gap</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="gap-front" value="1" step="0.1" min="0">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-door-closed"></i>
+                                            <span>Back Wall Gap</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="gap-back" value="1" step="0.1" min="0">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-border-style"></i>
+                                            <span>Left Wall Gap</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="gap-left" value="0.5" step="0.1" min="0">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-border-style"></i>
+                                            <span>Right Wall Gap</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="gap-right" value="0.5" step="0.1" min="0">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-pallet"></i> 4. Pallet & Stock Configuration</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="dimension-buttons">
+                            <div class="dimension-row">
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-box"></i>
+                                        <span>Pallet Type</span>
+                                    </div>
+                                    <div class="type-select-button">
+                                        <select id="pallet-type">
+                                            <option value="wooden">Wooden (Brown)</option>
+                                            <option value="plastic">Plastic (Blue)</option>
+                                            <option value="metal">Metal (Gray)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-button-group">
+                                    <div class="dimension-label">
+                                        <i class="fas fa-boxes"></i>
+                                        <span>Stock Type</span>
+                                    </div>
+                                    <div class="type-select-button">
+                                        <select id="stock-type">
+                                            <option value="hell_classic">Hell Classic (Red)</option>
+                                            <option value="hell_apple">Hell Apple (Green)</option>
+                                            <option value="hell_black_cherry">Hell Black Cherry (Purple)</option>
+                                            <option value="hell_multi">Hell Multi+ (Orange)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sub-section">
+                            <h4><i class="fas fa-ruler-combined"></i> Pallet Dimensions</h4>
+                            <div class="dimension-buttons">
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-ruler-vertical"></i>
+                                            <span>Pallet Length</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="pallet-length" value="1.2" step="0.1" min="0.1">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-ruler-horizontal"></i>
+                                            <span>Pallet Width</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="pallet-width" value="1.0" step="0.1" min="0.1">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                            <span>Pallet Height</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="pallet-height" value="0.15" step="0.01" min="0.01">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sub-section">
+                            <h4><i class="fas fa-ruler-combined"></i> Stock Dimensions</h4>
+                            <div class="dimension-buttons">
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-ruler-vertical"></i>
+                                            <span>Stock Length</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="stock-length" value="0.4" step="0.1" min="0.1">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-ruler-horizontal"></i>
+                                            <span>Stock Width</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="stock-width" value="0.3" step="0.1" min="0.1">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dimension-row">
+                                    <div class="dimension-button-group">
+                                        <div class="dimension-label">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                            <span>Stock Height</span>
+                                        </div>
+                                        <div class="dimension-input-button">
+                                            <input type="number" id="stock-height" value="0.2" step="0.01" min="0.01">
+                                            <div class="unit-dropdown">
+                                                <select class="unit-select">
+                                                    <option value="m">m</option>
+                                                    <option value="cm">cm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button id="add-pallet-btn" class="btn btn-secondary">
+                                <i class="fas fa-plus-circle"></i> Add Pallet to Selected Rack
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button id="reset-all-btn" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Reset All
+                    </button>
+                    <button id="export-btn" class="btn btn-success">
+                        <i class="fas fa-download"></i> Export Layout
+                    </button>
+                </div>
+
+                <!-- Status Panel -->
+                <div class="status-panel">
+                    <h3><i class="fas fa-info-circle"></i> Status</h3>
+                    <div id="status-message">Ready to configure dimensions and generate layout</div>
+                    <div id="selected-info">
+                        <p><strong>No object selected</strong></p>
+                        <p>Click on any object in 3D view to select</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Visualization Area -->
+        <div class="main-content">
+            <div class="visualization-header">
+                <h2><i class="fas fa-eye"></i> 3D Warehouse Visualization</h2>
+                <div class="visualization-controls">
+                    <button id="toggle-grid" class="control-btn active">
+                        <i class="fas fa-th"></i> Grid
+                    </button>
+                    <button id="toggle-labels" class="control-btn active">
+                        <i class="fas fa-tag"></i> Labels
+                    </button>
+                    <button id="toggle-walls" class="control-btn">
+                        <i class="fas fa-cube"></i> Walls
+                    </button>
+                    <div class="mode-selector">
+                        <label>Mode:</label>
+                        <select id="interaction-mode">
+                            <option value="view">View</option>
+                            <option value="edit">Edit</option>
+                            <option value="delete">Delete</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="3d-container">
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <p>Generating 3D Layout...</p>
+                </div>
+                <div class="no-layout-message" id="no-layout-message">
+                    <i class="fas fa-warehouse"></i>
+                    <h3>No Warehouse Layout Generated</h3>
+                    <p>Configure dimensions on the left and click "GENERATE 3D LAYOUT"</p>
+                </div>
+            </div>
+            
+            <div class="view-controls">
+                <div class="view-group">
+                    <button id="zoom-in" class="view-btn">
+                        <i class="fas fa-search-plus"></i> Zoom In
+                    </button>
+                    <button id="zoom-out" class="view-btn">
+                        <i class="fas fa-search-minus"></i> Zoom Out
+                    </button>
+                </div>
+                
+                <div class="view-group">
+                    <button id="reset-view" class="view-btn">
+                        <i class="fas fa-sync-alt"></i> Reset View
+                    </button>
+                </div>
+                
+                <div class="view-group">
+                    <button id="top-view" class="view-btn">
+                        <i class="fas fa-download"></i> Top View
+                    </button>
+                    <button id="front-view" class="view-btn">
+                        <i class="fas fa-forward"></i> Front View
+                    </button>
+                    <button id="side-view" class="view-btn">
+                        <i class="fas fa-step-forward"></i> Side View
+                    </button>
+                </div>
+            </div>
+
+            <div class="legend">
+                <h3><i class="fas fa-palette"></i> Color Legend</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="color-box" style="background-color: #FF6B6B;"></span>
+                        <span>Block 1</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box" style="background-color: #4ECDC4;"></span>
+                        <span>Block 2</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box" style="background-color: #FFD166;"></span>
+                        <span>Block 3</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box" style="background-color: #8B4513;"></span>
+                        <span>Wooden Pallet</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box" style="background-color: #1E90FF;"></span>
+                        <span>Plastic Pallet</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><i class="fas fa-copyright"></i> 2025 Warehouse Layout Planner | Click-to-Configure Dimension Buttons</p>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="threejs-visualizer.js"></script>
+</body>
+</html>
