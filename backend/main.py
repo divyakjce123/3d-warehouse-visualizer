@@ -1,22 +1,48 @@
-# backend/main.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, HTTPException, Body, Path
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel
+import uvicorn
 from warehouse_calc import WarehouseCalculator
-import json
-import os
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
 
+# CORS Configuration
+origins = ["*"]  # Update this with specific origins in production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# In-memory storage
 warehouse_data = {}
 
-@app.route('/api/warehouse/create', methods=['POST'])
-def create_warehouse():
+# --- Pydantic Models for Input Validation ---
+class RackInput(BaseModel):
+    position: Optional[Dict[str, float]] = {'x': 0, 'y': 0, 'z': 0}
+    dimensions: Optional[Dict[str, float]] = None
+    floors: int = 1
+    rows: int = 1
+
+class PalletInput(BaseModel):
+    type: str = 'wooden'
+    dimensions: Optional[Dict[str, float]] = None
+    color: str = '#964B00'
+    position: Optional[Dict[str, float]] = None
+    stock: Optional[Dict[str, Any]] = None
+
+# --- Routes ---
+
+@app.post("/api/warehouse/create")
+async def create_warehouse(data: Dict[str, Any] = Body(...)):
     try:
-        data = request.json
         warehouse_id = data.get('id', 'warehouse_1')
         
         calc = WarehouseCalculator()
+        # Ensure your WarehouseCalculator is adapted to not rely on Flask contexts if it did
         warehouse_layout = calc.create_warehouse_layout(data)
         
         warehouse_data[warehouse_id] = {
@@ -24,54 +50,68 @@ def create_warehouse():
             'layout': warehouse_layout
         }
         
-        return jsonify({
+        return {
             'success': True,
             'warehouse_id': warehouse_id,
             'layout': warehouse_layout
-        })
-    
+        }
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        raise HTTPException(status_code=400, detail=str(e))
 
-@app.route('/api/warehouse/<warehouse_id>', methods=['GET'])
-def get_warehouse(warehouse_id):
+@app.get("/api/warehouse/{warehouse_id}")
+async def get_warehouse(warehouse_id: str):
     if warehouse_id in warehouse_data:
-        return jsonify({
+        return {
             'success': True,
             'warehouse': warehouse_data[warehouse_id]
-        })
-    return jsonify({'success': False, 'error': 'Warehouse not found'}), 404
+        }
+    raise HTTPException(status_code=404, detail='Warehouse not found')
 
-# Note: These endpoints are retained for API compatibility but the primary generation logic 
-# is now handled via /create with the full configuration.
-@app.route('/api/warehouse/<warehouse_id>/block/<block_id>/rack', methods=['POST'])
-def add_rack(warehouse_id, block_id):
+@app.post("/api/warehouse/{warehouse_id}/block/{block_id}/rack")
+async def add_rack(
+    warehouse_id: str, 
+    block_id: str, 
+    data: RackInput
+):
     try:
-        data = request.json
         if warehouse_id in warehouse_data:
             warehouse = warehouse_data[warehouse_id]
             for block in warehouse['layout']['blocks']:
                 if block['id'] == block_id:
                     if 'racks' not in block: block['racks'] = []
+                    
                     rack_id = f"rack_{len(block['racks']) + 1}"
+                    
+                    # Convert Pydantic model to dict
                     rack_config = {
                         'id': rack_id,
-                        'position': data.get('position', {'x': 0, 'y': 0, 'z': 0}),
-                        'dimensions': data.get('dimensions'),
-                        'floors': data.get('floors', 1),
-                        'rows': data.get('rows', 1),
+                        'position': data.position,
+                        'dimensions': data.dimensions,
+                        'floors': data.floors,
+                        'rows': data.rows,
                         'pallets': []
                     }
                     block['racks'].append(rack_config)
-                    return jsonify({'success': True, 'rack_id': rack_id})
-        return jsonify({'success': False, 'error': 'Warehouse or block not found'}), 404
+                    return {'success': True, 'rack_id': rack_id}
+            
+            # If loop finishes without finding block
+            raise HTTPException(status_code=404, detail='Block not found')
+        
+        raise HTTPException(status_code=404, detail='Warehouse not found')
+        
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        raise HTTPException(status_code=400, detail=str(e))
 
-@app.route('/api/warehouse/<warehouse_id>/block/<block_id>/rack/<rack_id>/pallet', methods=['POST'])
-def add_pallet(warehouse_id, block_id, rack_id):
+@app.post("/api/warehouse/{warehouse_id}/block/{block_id}/rack/{rack_id}/pallet")
+async def add_pallet(
+    warehouse_id: str, 
+    block_id: str, 
+    rack_id: str, 
+    data: PalletInput
+):
     try:
-        data = request.json
         if warehouse_id in warehouse_data:
             warehouse = warehouse_data[warehouse_id]
             for block in warehouse['layout']['blocks']:
@@ -79,35 +119,52 @@ def add_pallet(warehouse_id, block_id, rack_id):
                     for rack in block['racks']:
                         if rack['id'] == rack_id:
                             pallet_id = f"pallet_{len(rack.get('pallets', [])) + 1}"
+                            
                             pallet_data = {
                                 'id': pallet_id,
-                                'type': data.get('type', 'wooden'),
-                                'dimensions': data.get('dimensions'),
-                                'color': data.get('color', '#964B00'),
-                                'position': data.get('position'),
-                                'stock': data.get('stock')
+                                'type': data.type,
+                                'dimensions': data.dimensions,
+                                'color': data.color,
+                                'position': data.position,
+                                'stock': data.stock
                             }
+                            
                             if 'pallets' not in rack: rack['pallets'] = []
                             rack['pallets'].append(pallet_data)
-                            return jsonify({'success': True, 'pallet_id': pallet_id})
-        return jsonify({'success': False, 'error': 'Not found'}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+                            return {'success': True, 'pallet_id': pallet_id}
+            
+            raise HTTPException(status_code=404, detail='Rack, Block, or Warehouse not found')
+            
+        raise HTTPException(status_code=404, detail='Warehouse not found')
 
-@app.route('/api/warehouse/<warehouse_id>/delete', methods=['DELETE'])
-def delete_warehouse(warehouse_id):
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/warehouse/{warehouse_id}/delete")
+async def delete_warehouse(warehouse_id: str):
     if warehouse_id in warehouse_data:
         del warehouse_data[warehouse_id]
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'error': 'Warehouse not found'}), 404
+        return {'success': True}
+    raise HTTPException(status_code=404, detail='Warehouse not found')
 
-@app.route('/api/warehouse/<warehouse_id>/block/<block_id>/delete', methods=['DELETE'])
-def delete_block(warehouse_id, block_id):
+@app.delete("/api/warehouse/{warehouse_id}/block/{block_id}/delete")
+async def delete_block(warehouse_id: str, block_id: str):
     if warehouse_id in warehouse_data:
         warehouse = warehouse_data[warehouse_id]
-        warehouse['layout']['blocks'] = [b for b in warehouse['layout']['blocks'] if b['id'] != block_id]
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'error': 'Not found'}), 404
+        original_count = len(warehouse['layout']['blocks'])
+        
+        warehouse['layout']['blocks'] = [
+            b for b in warehouse['layout']['blocks'] if b['id'] != block_id
+        ]
+        
+        if len(warehouse['layout']['blocks']) < original_count:
+            return {'success': True}
+        else:
+            raise HTTPException(status_code=404, detail='Block not found')
+            
+    raise HTTPException(status_code=404, detail='Warehouse not found')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    uvicorn.run("main:app", host="127.0.0.1", port=5000, reload=True)

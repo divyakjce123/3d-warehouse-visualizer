@@ -1,6 +1,12 @@
 class ThreeJSVisualizer {
     constructor(containerId) {
+        console.log("Visualizer: Initializing...");
         this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.error("Visualizer: Container not found!");
+            return;
+        }
+
         this.scene = null;
         this.camera = null;
         this.renderer = null;
@@ -18,42 +24,52 @@ class ThreeJSVisualizer {
     }
     
     init() {
+        // 1. Setup Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xf8f9fa);
-        
+        this.scene.background = new THREE.Color(0xe0e0e0); // Darker grey to make objects pop
+
+        // 2. Setup Camera
         this.camera = new THREE.PerspectiveCamera(
             45,
             this.container.clientWidth / this.container.clientHeight,
             0.1,
             5000 
         );
-        this.camera.position.set(40, 30, 40);
+        this.camera.position.set(50, 60, 50); // Moved up and out for better view
+        this.camera.lookAt(0, 0, 0);
         
+        // 3. Setup Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
         
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 1;
-        this.controls.maxDistance = 1000;
+        // 4. Setup Controls (with Error Check)
+        if (typeof THREE.OrbitControls !== 'undefined') {
+            this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.05;
+        } else {
+            console.error("Visualizer: THREE.OrbitControls is missing. Check script imports.");
+        }
         
+        // 5. Add Lighting
         this.addLighting();
         
-        this.gridHelper = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
-        this.gridHelper.material.opacity = 0.1;
-        this.gridHelper.material.transparent = true;
+        // 6. Add Helpers (Grid)
+        // Made grid darker and less transparent so you can definitely see it
+        this.gridHelper = new THREE.GridHelper(200, 40, 0x000000, 0x555555);
         this.scene.add(this.gridHelper);
         
-        this.axesHelper = new THREE.AxesHelper(10);
+        this.axesHelper = new THREE.AxesHelper(20);
         this.scene.add(this.axesHelper);
         
+        // 7. Raycaster for clicking
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
+        // 8. Labels
         this.labelContainer = document.createElement('div');
         this.labelContainer.style.position = 'absolute';
         this.labelContainer.style.top = '0';
@@ -61,15 +77,18 @@ class ThreeJSVisualizer {
         this.labelContainer.style.pointerEvents = 'none';
         this.container.appendChild(this.labelContainer);
         
+        // 9. Initial Default Walls
         this.createDefaultWalls();
         this.onWindowResize();
+        
+        console.log("Visualizer: Initialization Complete");
     }
     
     createDefaultWalls() {
         const wallMaterial = new THREE.MeshLambertMaterial({ 
             color: 0xcccccc,
             transparent: true,
-            opacity: 0.1,
+            opacity: 0.5, // INCREASED OPACITY (was 0.1)
             side: THREE.DoubleSide
         });
         
@@ -82,7 +101,7 @@ class ThreeJSVisualizer {
         this.scene.add(floor);
         
         this.wallMeshes = [];
-        const wallThickness = 0.2;
+        const wallThickness = 1.0; // Thicker walls
         const size = 100;
         
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, 20, wallThickness), wallMaterial);
@@ -108,26 +127,13 @@ class ThreeJSVisualizer {
     }
     
     addLighting() {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         this.scene.add(ambientLight);
         
         const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
         mainLight.position.set(50, 100, 50);
         mainLight.castShadow = true;
-        mainLight.shadow.mapSize.width = 2048;
-        mainLight.shadow.mapSize.height = 2048;
-        mainLight.shadow.camera.near = 0.5;
-        mainLight.shadow.camera.far = 500;
-        
         this.scene.add(mainLight);
-        
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        fillLight.position.set(-50, 30, -50);
-        this.scene.add(fillLight);
-        
-        const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
-        backLight.position.set(0, 20, -100);
-        this.scene.add(backLight);
     }
     
     setupEventListeners() {
@@ -135,36 +141,7 @@ class ThreeJSVisualizer {
         
         this.renderer.domElement.addEventListener('click', (event) => this.onMouseClick(event));
         
-        let isDragging = false;
-        let dragStart = { x: 0, y: 0 };
-        
-        this.renderer.domElement.addEventListener('mousedown', (event) => {
-            if (this.interactionMode === 'edit') {
-                isDragging = true;
-                dragStart.x = event.clientX;
-                dragStart.y = event.clientY;
-            }
-        });
-        
-        this.renderer.domElement.addEventListener('mousemove', (event) => {
-            if (isDragging && this.selectedObject) {
-                const deltaX = event.clientX - dragStart.x;
-                const deltaY = event.clientY - dragStart.y;
-                
-                this.selectedObject.position.x += deltaX * 0.01;
-                this.selectedObject.position.z -= deltaY * 0.01;
-                
-                dragStart.x = event.clientX;
-                dragStart.y = event.clientY;
-                
-                this.updateLabels();
-            }
-        });
-        
-        this.renderer.domElement.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-        
+        // Simple Interaction Mode Handling
         this.renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
     }
     
@@ -197,21 +174,29 @@ class ThreeJSVisualizer {
     
     selectObject(object) {
         if (this.selectedObject) {
-            this.selectedObject.material.emissive.setHex(this.selectedObject.userData.originalEmissive);
+            if(this.selectedObject.material && this.selectedObject.material.emissive) {
+                this.selectedObject.material.emissive.setHex(this.selectedObject.userData.originalEmissive);
+            }
         }
         
         let selectableObject = object;
-        while (selectableObject && !selectableObject.userData.id) {
+        // Find the parent Group if clicked on a child mesh
+        while (selectableObject && !selectableObject.userData.id && selectableObject.parent) {
             selectableObject = selectableObject.parent;
         }
         
         if (selectableObject && selectableObject.userData.id) {
             this.selectedObject = selectableObject;
             
-            if (selectableObject.material) {
-                selectableObject.userData.originalEmissive = selectableObject.material.emissive.getHex();
-                selectableObject.material.emissive.setHex(0xff5252);
-            }
+            // Highlight logic
+            selectableObject.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    if (child.userData.originalEmissive === undefined) {
+                        child.userData.originalEmissive = child.material.emissive ? child.material.emissive.getHex() : 0x000000;
+                    }
+                    if(child.material.emissive) child.material.emissive.setHex(0xff5252);
+                }
+            });
             
             if (window.warehouseApp) {
                 window.warehouseApp.updateSelectedInfo(selectableObject.userData);
@@ -221,9 +206,11 @@ class ThreeJSVisualizer {
     
     deselectObject() {
         if (this.selectedObject) {
-            if (this.selectedObject.material) {
-                this.selectedObject.material.emissive.setHex(this.selectedObject.userData.originalEmissive);
-            }
+            this.selectedObject.traverse((child) => {
+                if (child.isMesh && child.material && child.material.emissive) {
+                    child.material.emissive.setHex(child.userData.originalEmissive || 0x000000);
+                }
+            });
             this.selectedObject = null;
             
             if (window.warehouseApp) {
@@ -234,7 +221,7 @@ class ThreeJSVisualizer {
     
     deleteObject(object) {
         let deletableObject = object;
-        while (deletableObject && !deletableObject.userData.id) {
+        while (deletableObject && !deletableObject.userData.id && deletableObject.parent) {
             deletableObject = deletableObject.parent;
         }
         
@@ -243,13 +230,7 @@ class ThreeJSVisualizer {
             this.objects.delete(deletableObject.userData.id);
             
             const label = document.getElementById(`label-${deletableObject.userData.id}`);
-            if (label) {
-                this.labelContainer.removeChild(label);
-            }
-            
-            if (this.selectedObject === deletableObject) {
-                this.deselectObject();
-            }
+            if (label) label.remove();
             
             if (window.warehouseApp) {
                 window.warehouseApp.showNotification(`${deletableObject.userData.name} deleted`, 'success');
@@ -258,56 +239,47 @@ class ThreeJSVisualizer {
     }
     
     renderWarehouse(layout) {
+        console.log("Visualizer: Rendering Warehouse Layout...", layout);
         this.clearWarehouse();
-        const dims = layout.warehouse_dimensions;
-        this.createWarehouseFloor(dims);
         
-        layout.blocks.forEach(block => {
-            this.createBlock(block);
-        });
+        // 1. Create Floor
+        if(layout.warehouse_dimensions) {
+            this.createWarehouseFloor(layout.warehouse_dimensions);
+        }
+        
+        // 2. Create Blocks
+        if (layout.blocks) {
+            layout.blocks.forEach(block => {
+                this.createBlock(block);
+            });
+        }
         
         this.updateLabels();
-        this.onWindowResize();
         this.fitCameraToScene(); 
     }
     
     fitCameraToScene() {
+        // Simple default view reset if no objects
         if (this.objects.size === 0) {
             this.resetView();
             return;
         }
-
-        const box = new THREE.Box3();
-        this.objects.forEach(object => {
-            box.expandByObject(object);
-        });
-
-        const floor = this.scene.children.find(c => c.userData && c.userData.type === 'warehouse-floor');
-        if (floor) {
-            box.expandByObject(floor);
-        }
-
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const fov = this.camera.fov * (Math.PI / 180);
-        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-        cameraZ *= 1.2;
-
-        const direction = new THREE.Vector3(1, 0.8, 1).normalize();
-        const position = direction.multiplyScalar(cameraZ).add(center);
-
-        this.camera.position.copy(position);
-        this.camera.lookAt(center);
-        this.controls.target.copy(center);
-        this.controls.update();
+        // Just reset view to a good angle for now to ensure visibility
+        this.camera.position.set(50, 60, 80);
+        this.camera.lookAt(0,0,0);
+        if(this.controls) this.controls.target.set(0,0,0);
     }
     
     createWarehouseFloor(dimensions) {
         const width = this.convertToMeters(dimensions.width, dimensions.unit);
         const length = this.convertToMeters(dimensions.length, dimensions.unit);
         
+        console.log(`Visualizer: Creating Floor ${width}m x ${length}m`);
+
+        // Remove old floor/grid
+        const oldFloor = this.scene.getObjectByName('Warehouse Floor');
+        if(oldFloor) this.scene.remove(oldFloor);
+
         const floorGeometry = new THREE.PlaneGeometry(width, length);
         const floorMaterial = new THREE.MeshLambertMaterial({
             color: 0x78909c,
@@ -316,16 +288,14 @@ class ThreeJSVisualizer {
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
-        floor.userData = { type: 'warehouse-floor', name: 'Warehouse Floor' };
+        floor.name = 'Warehouse Floor';
+        floor.userData = { type: 'warehouse-floor' };
         this.scene.add(floor);
         
+        // Update Grid
         const gridSize = Math.max(200, Math.max(width, length) * 2);
-        const divisions = Math.floor(gridSize / 5);
-        
         this.scene.remove(this.gridHelper);
-        this.gridHelper = new THREE.GridHelper(gridSize, divisions, 0x000000, 0x000000);
-        this.gridHelper.material.opacity = 0.1;
-        this.gridHelper.material.transparent = true;
+        this.gridHelper = new THREE.GridHelper(gridSize, 50, 0x000000, 0x555555);
         this.scene.add(this.gridHelper);
     }
     
@@ -333,37 +303,34 @@ class ThreeJSVisualizer {
         const { position, dimensions, color, name, racks } = blockData;
         
         const blockContainer = new THREE.Group();
-        blockContainer.position.set(position.x, position.y, position.z);
+        // Backend sends Y=0, we want it sitting on floor
+        blockContainer.position.set(position.x, dimensions.height/2, position.z);
         
         const blockId = blockData.id;
         blockContainer.userData = {
             id: blockId,
             type: 'block',
             name: name,
-            dimensions: dimensions,
-            position: position,
-            color: color,
-            rackCount: racks ? racks.length : 0
+            dimensions: dimensions
         };
         
         const colorHex = parseInt(color.replace('#', ''), 16);
         
+        // Wireframe
         const blockGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
         const blockEdges = new THREE.EdgesGeometry(blockGeometry);
         const blockMaterial = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
         const blockWireframe = new THREE.LineSegments(blockEdges, blockMaterial);
         blockContainer.add(blockWireframe);
         
-        const fillMaterial = new THREE.MeshLambertMaterial({ color: colorHex, transparent: true, opacity: 0.1 });
+        // Transparent Fill
+        const fillMaterial = new THREE.MeshLambertMaterial({ color: colorHex, transparent: true, opacity: 0.2 });
         const blockFill = new THREE.Mesh(blockGeometry, fillMaterial);
-        blockFill.position.y = dimensions.height / 2;
-        blockFill.castShadow = true;
-        blockFill.receiveShadow = true;
         blockContainer.add(blockFill);
         
         this.createLabel(blockId, name, {
             x: position.x,
-            y: position.y + dimensions.height + 0.5,
+            y: dimensions.height + 2,
             z: position.z
         });
         
@@ -378,107 +345,46 @@ class ThreeJSVisualizer {
     }
     
     createRack(rackData, parentBlock) {
+        // rackData.position is relative to block center in calculation? 
+        // Let's assume absolute or relative logic from Python. 
+        // Based on Python code: x_pos is offset from center. So it is relative.
         const { position, dimensions, floor, row, column, pallet } = rackData;
         
         const rackContainer = new THREE.Group();
-        rackContainer.position.set(position.x, position.y, position.z);
+        // Note: Python Y position was calculated for the shelf. 
+        // But for container we position at rack center relative to block
+        
+        // Python position output: {'x': x_pos, 'y': y_pos, 'z': z_pos}
+        // y_pos in Python is height of specific floor. 
+        // We want the rack mesh to be at specific location.
+        
+        rackContainer.position.set(position.x, position.y - (parentBlock.userData.dimensions.height/2), position.z);
         
         const rackId = rackData.id;
-        const rackName = `Rack F${floor}R${row}C${column}`;
-        
-        const rackUserData = {
-            id: rackId,
-            type: 'rack',
-            name: rackName,
-            blockId: parentBlock.userData.id,
-            floor: floor, row: row, column: column,
-            dimensions: dimensions,
-            position: position
-        };
+        const rackName = `Rack F${floor}`;
         
         const rackGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
-        const rackMaterial = new THREE.MeshLambertMaterial({ color: 0x2c5282, transparent: true, opacity: 0.7 });
+        const rackMaterial = new THREE.MeshLambertMaterial({ color: 0x2c5282 });
         const rackMesh = new THREE.Mesh(rackGeometry, rackMaterial);
-        rackMesh.position.y = dimensions.height / 2;
-        rackMesh.castShadow = true;
-        rackMesh.receiveShadow = true;
-        rackMesh.userData = rackUserData;
+        
         rackContainer.add(rackMesh);
-        
-        // Add shelves visually
-        const shelfCount = Math.max(3, Math.floor(dimensions.height / 0.5));
-        for (let i = 0; i < shelfCount; i++) {
-            const shelfGeometry = new THREE.BoxGeometry(dimensions.width - 0.1, 0.05, dimensions.length - 0.1);
-            const shelfMaterial = new THREE.MeshLambertMaterial({ color: 0x718096 });
-            const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
-            shelf.position.y = (i * dimensions.height / shelfCount) + 0.025;
-            rackContainer.add(shelf);
-        }
 
-        // Add uprights
-        const uprightGeometry = new THREE.BoxGeometry(0.05, dimensions.height, 0.05);
-        const uprightMaterial = new THREE.MeshLambertMaterial({ color: 0x4a5568 });
-        const positions = [
-            { x: -dimensions.width/2 + 0.025, z: -dimensions.length/2 + 0.025 },
-            { x: dimensions.width/2 - 0.025, z: -dimensions.length/2 + 0.025 },
-            { x: -dimensions.width/2 + 0.025, z: dimensions.length/2 - 0.025 },
-            { x: dimensions.width/2 - 0.025, z: dimensions.length/2 - 0.025 }
-        ];
-        
-        positions.forEach(pos => {
-            const upright = new THREE.Mesh(uprightGeometry, uprightMaterial);
-            upright.position.set(pos.x, dimensions.height/2, pos.z);
-            rackContainer.add(upright);
-        });
-
-        // IMPORTANT: Create Pallet if data exists
         if (pallet) {
             this.createPallet(pallet, rackContainer);
         }
         
-        const labelPosition = {
-            x: parentBlock.position.x + position.x,
-            y: position.y + dimensions.height + 0.3,
-            z: parentBlock.position.z + position.z
-        };
-        this.createLabel(rackId, rackName, labelPosition);
-        
         parentBlock.add(rackContainer);
-        this.objects.set(rackId, rackContainer);
     }
     
     createPallet(palletData, parentRack) {
         const pDims = palletData.dimensions;
         const color = parseInt(palletData.color.replace('#', ''), 16);
-        
         const geo = new THREE.BoxGeometry(pDims.width, pDims.height, pDims.length);
         const mat = new THREE.MeshLambertMaterial({ color: color });
         const mesh = new THREE.Mesh(geo, mat);
-        
-        // Place on bottom shelf logic
-        const rackHeight = parentRack.children[0].geometry.parameters.height;
-        mesh.position.y = -rackHeight/2 + pDims.height/2 + 0.1; // Slightly above bottom
-        
-        mesh.userData = {
-            id: `pallet_${Math.random()}`,
-            type: 'pallet',
-            name: `Pallet (${palletData.type})`,
-            originalEmissive: 0x000000
-        };
-        
+        // Put on top of rack shelf
+        mesh.position.y = 0.1; 
         parentRack.add(mesh);
-        
-        if(palletData.stock) {
-            const sDims = palletData.stock.dimensions;
-            const sColor = parseInt(palletData.stock.color.replace('#', ''), 16);
-            
-            const sGeo = new THREE.BoxGeometry(sDims.width, sDims.height, sDims.length);
-            const sMat = new THREE.MeshLambertMaterial({ color: sColor });
-            const sMesh = new THREE.Mesh(sGeo, sMat);
-            sMesh.position.y = mesh.position.y + pDims.height/2 + sDims.height/2;
-            
-            parentRack.add(sMesh);
-        }
     }
     
     createLabel(objectId, text, position) {
@@ -493,45 +399,44 @@ class ThreeJSVisualizer {
         label.textContent = text;
         label.style.cssText = `
             position: absolute;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #333;
-            border: 1px solid #d32f2f;
+            background: white;
+            padding: 2px 5px;
+            font-size: 10px;
+            border: 1px solid black;
             pointer-events: none;
-            white-space: nowrap;
-            transform: translate(-50%, -100%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 10;
+            display: none; /* Hidden by default until position update */
         `;
         
         this.labelContainer.appendChild(label);
-        this.updateLabelPosition(label, position);
     }
     
     updateLabelPosition(label, position) {
+        // Project world position to screen coords
         const vector = new THREE.Vector3(position.x, position.y, position.z);
+        
+        // Standard projection
         vector.project(this.camera);
         
         const x = (vector.x * 0.5 + 0.5) * this.container.clientWidth;
         const y = (-(vector.y * 0.5 + 0.5)) * this.container.clientHeight;
         
-        label.style.left = `${x}px`;
-        label.style.top = `${y}px`;
-        label.style.display = vector.z < 1 ? 'block' : 'none';
+        if (vector.z < 1) { // Only show if in front of camera
+            label.style.left = `${x}px`;
+            label.style.top = `${y}px`;
+            label.style.display = 'block';
+        } else {
+            label.style.display = 'none';
+        }
     }
     
     updateLabels() {
         this.objects.forEach((object, id) => {
             const label = document.getElementById(`label-${id}`);
             if (label) {
-                const worldPosition = new THREE.Vector3();
-                object.getWorldPosition(worldPosition);
-                if (object.userData.type === 'block') worldPosition.y += object.userData.dimensions.height + 0.5;
-                else if (object.userData.type === 'rack') worldPosition.y += object.userData.dimensions.height + 0.3;
-                this.updateLabelPosition(label, worldPosition);
+                const pos = new THREE.Vector3();
+                object.getWorldPosition(pos);
+                pos.y += object.userData.dimensions.height / 2 + 1; // Move label above object
+                this.updateLabelPosition(label, pos);
             }
         });
     }
@@ -553,13 +458,7 @@ class ThreeJSVisualizer {
     
     clearScene() {
         this.clearWarehouse();
-        // Remove everything except lights and helpers
-        const toRemove = this.scene.children.filter(c => 
-            c !== this.gridHelper && c !== this.axesHelper && !(c instanceof THREE.Light) && !this.wallMeshes.includes(c)
-        );
-        toRemove.forEach(o => this.scene.remove(o));
-        this.labelContainer.innerHTML = '';
-        this.resetView();
+        this.createDefaultWalls();
     }
     
     toggleGrid() { this.gridHelper.visible = !this.gridHelper.visible; }
@@ -572,22 +471,27 @@ class ThreeJSVisualizer {
         this.wallMeshes.forEach(w => w.visible = this.wallsVisible); 
     }
     
-    zoomIn() { this.camera.position.multiplyScalar(0.9); this.controls.update(); }
-    zoomOut() { this.camera.position.multiplyScalar(1.1); this.controls.update(); }
-    resetView() { this.camera.position.set(40, 30, 40); this.controls.reset(); }
-    setTopView() { this.camera.position.set(0, 100, 0); this.camera.lookAt(0,0,0); this.controls.update(); }
-    setFrontView() { this.camera.position.set(0, 30, 100); this.camera.lookAt(0,0,0); this.controls.update(); }
-    setSideView() { this.camera.position.set(100, 30, 0); this.camera.lookAt(0,0,0); this.controls.update(); }
+    zoomIn() { this.camera.position.multiplyScalar(0.9); if(this.controls) this.controls.update(); }
+    zoomOut() { this.camera.position.multiplyScalar(1.1); if(this.controls) this.controls.update(); }
+    resetView() { this.camera.position.set(50, 60, 50); this.camera.lookAt(0,0,0); if(this.controls) this.controls.reset(); }
+    setTopView() { this.camera.position.set(0, 100, 0); this.camera.lookAt(0,0,0); if(this.controls) this.controls.update(); }
+    setFrontView() { this.camera.position.set(0, 20, 100); this.camera.lookAt(0,0,0); if(this.controls) this.controls.update(); }
+    setSideView() { this.camera.position.set(100, 20, 0); this.camera.lookAt(0,0,0); if(this.controls) this.controls.update(); }
     setInteractionMode(mode) { this.interactionMode = mode; }
     
     animate() {
         requestAnimationFrame(() => this.animate());
         if (this.controls) this.controls.update();
         if (this.labelsVisible) this.updateLabels();
-        if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.visualizer = new ThreeJSVisualizer('3d-container');
+    // Wait slightly to ensure styles are applied
+    setTimeout(() => {
+        window.visualizer = new ThreeJSVisualizer('3d-container');
+    }, 100);
 });
