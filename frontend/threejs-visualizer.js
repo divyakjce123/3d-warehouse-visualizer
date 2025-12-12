@@ -147,9 +147,16 @@ class ThreeJSVisualizer {
     
     onWindowResize() {
         if (!this.container || !this.camera || !this.renderer) return;
+        
+        // Update camera aspect ratio
         this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera.updateProjectionMatrix();
+        
+        // Resize renderer
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        
+        // FIX: Force a re-render immediately after resize to prevent white screen
+        this.renderer.render(this.scene, this.camera);
     }
     
     onMouseClick(event) {
@@ -255,7 +262,13 @@ class ThreeJSVisualizer {
         }
         
         this.updateLabels();
-        this.fitCameraToScene(); 
+        
+        // FIX: Force a resize calculation 50ms after adding objects
+        // This solves the issue where the canvas remains 0px height in flex containers
+        setTimeout(() => {
+            this.onWindowResize();
+            this.fitCameraToScene();
+        }, 50);
     }
     
     fitCameraToScene() {

@@ -895,3 +895,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #d32f2f;
 }
+
+#3d-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
