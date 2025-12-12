@@ -1,3 +1,4 @@
+// frontend/threejs-visualizer.js
 class ThreeJSVisualizer {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
@@ -479,6 +480,17 @@ class ThreeJSVisualizer {
         if (this.labelsVisible) this.updateLabels();
         if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
     }
+    // ... inside ThreeJSVisualizer class ...
+    clearWarehouse() { // <--- Defined here
+        this.objects.forEach((obj, id) => {
+            if (obj.parent) obj.parent.remove(obj);
+            const label = document.getElementById(`label-${id}`);
+            if (label) label.remove();
+        });
+        this.objects.clear();
+        this.deselectObject();
+    }
+// ...
 }
 
 document.addEventListener('DOMContentLoaded', () => {
