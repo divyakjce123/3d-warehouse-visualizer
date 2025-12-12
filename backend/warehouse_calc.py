@@ -2,12 +2,18 @@ import math
 
 class WarehouseCalculator:
     def __init__(self):
+        # Base unit is now Centimeters (cm)
         self.conversion_factors = {
-            'cm': 0.01, 'm': 1.0, 'km': 1000.0,
-            'in': 0.0254, 'ft': 0.3048, 'yd': 0.9144, 'mi': 1609.34
+            'cm': 1.0, 
+            'm': 100.0, 
+            'km': 100000.0,
+            'in': 2.54, 
+            'ft': 30.48, 
+            'yd': 91.44, 
+            'mi': 160934.4
         }
     
-    def convert_to_meters(self, value, unit):
+    def convert_to_centimeters(self, value, unit):
         if unit not in self.conversion_factors:
             raise ValueError(f"Unsupported unit: {unit}")
         return value * self.conversion_factors[unit]
@@ -17,18 +23,17 @@ class WarehouseCalculator:
         
         # 1. Warehouse Dimensions
         wh_dims = config['warehouse_dimensions']
-        wh_length = self.convert_to_meters(wh_dims['length'], wh_dims['unit'])
-        wh_width = self.convert_to_meters(wh_dims['width'], wh_dims['unit'])
-        wh_height = self.convert_to_meters(wh_dims['height'], wh_dims['unit'])
+        wh_length = self.convert_to_centimeters(wh_dims['length'], wh_dims['unit'])
+        wh_width = self.convert_to_centimeters(wh_dims['width'], wh_dims['unit'])
+        wh_height = self.convert_to_centimeters(wh_dims['height'], wh_dims['unit'])
         
         num_blocks = config['num_blocks']
-        block_gap = self.convert_to_meters(config['block_gap'], config['block_gap_unit'])
+        block_gap = self.convert_to_centimeters(config['block_gap'], config['block_gap_unit'])
         
         # 2. Calculate Block Sizes
         total_gap_width = block_gap * (num_blocks - 1) if num_blocks > 1 else 0
         available_width = wh_width - total_gap_width
         
-        # Avoid division by zero or negative width
         if available_width <= 0: available_width = 1.0
         
         block_width = available_width / num_blocks
@@ -73,15 +78,14 @@ class WarehouseCalculator:
         rack_cfg = block_conf['rack_config']
         
         # Wall gaps
-        gap_f = self.convert_to_meters(rack_cfg['gap_front'], rack_cfg['wall_gap_unit'])
-        gap_b = self.convert_to_meters(rack_cfg['gap_back'], rack_cfg['wall_gap_unit'])
-        gap_l = self.convert_to_meters(rack_cfg['gap_left'], rack_cfg['wall_gap_unit'])
-        gap_r = self.convert_to_meters(rack_cfg['gap_right'], rack_cfg['wall_gap_unit'])
+        gap_f = self.convert_to_centimeters(rack_cfg['gap_front'], rack_cfg['wall_gap_unit'])
+        gap_b = self.convert_to_centimeters(rack_cfg['gap_back'], rack_cfg['wall_gap_unit'])
+        gap_l = self.convert_to_centimeters(rack_cfg['gap_left'], rack_cfg['wall_gap_unit'])
+        gap_r = self.convert_to_centimeters(rack_cfg['gap_right'], rack_cfg['wall_gap_unit'])
         
-        # Custom Rack Gaps (List)
-        custom_gaps = [self.convert_to_meters(g, rack_cfg['gap_unit']) for g in rack_cfg.get('custom_gaps', [])]
+        # Custom Rack Gaps
+        custom_gaps = [self.convert_to_centimeters(g, rack_cfg['gap_unit']) for g in rack_cfg.get('custom_gaps', [])]
         
-        # Layout info
         num_rows = rack_cfg['num_rows']
         num_racks_total = rack_cfg['num_racks']
         num_floors = rack_cfg['num_floors']
@@ -96,7 +100,6 @@ class WarehouseCalculator:
             current_row_gap_sum = 0
             start_rack_idx = r * racks_per_row
             
-            # We need (racks_per_row - 1) gaps for this row
             for c in range(racks_per_row - 1):
                 gap_idx = start_rack_idx + c
                 if gap_idx < len(custom_gaps):
@@ -110,12 +113,10 @@ class WarehouseCalculator:
         avail_l = block_dims['length'] - gap_f - gap_b
         
         rack_w = (avail_w - max_row_gap_sum) / racks_per_row
+        if rack_w < 1.0: rack_w = 10.0 # Safety fallback (10cm)
         
-        # Safety fallback
-        if rack_w < 0.1: rack_w = 0.5 
-        
-        # Standard spacing for rows
-        row_gap_std = 1.0 
+        # Standard spacing for rows (150 cm / 1.5m aisle)
+        row_gap_std = 150.0 
         total_row_gaps = row_gap_std * (num_rows - 1) if num_rows > 1 else 0
         rack_l = (avail_l - total_row_gaps) / num_rows
         
@@ -125,13 +126,11 @@ class WarehouseCalculator:
         global_rack_count = 0
         
         for r in range(num_rows):
-            # Reset X position for new row
             current_x_offset = -block_dims['width']/2 + gap_l
             
             for c in range(racks_per_row):
                 if global_rack_count >= num_racks_total: break
                 
-                # Determine gap to add *before* placing this rack
                 gap_before = 0
                 if c > 0:
                     gap_idx = global_rack_count - 1
@@ -140,9 +139,7 @@ class WarehouseCalculator:
                 
                 current_x_offset += gap_before
                 
-                # Center of current rack
                 x_pos = current_x_offset + (rack_w / 2)
-                
                 z_start = -block_dims['length']/2 + gap_f + (rack_l/2)
                 z_pos = z_start + r * (rack_l + row_gap_std)
                 
@@ -162,14 +159,12 @@ class WarehouseCalculator:
                         'floor': f+1, 'row': r+1, 'column': c+1
                     }
                     
-                    # Stock logic
                     stock_pos = block_conf['stock_config']['position']
                     if stock_pos['floor'] == f+1 and stock_pos['row'] == r+1 and stock_pos['col'] == c+1:
                         rack_data['pallet'] = self.create_pallet_data(block_conf)
                         
                     racks.append(rack_data)
                 
-                # Advance offset by rack width for next iteration
                 current_x_offset += rack_w
                 global_rack_count += 1
                 
@@ -184,17 +179,17 @@ class WarehouseCalculator:
             'color': pc['color'],
             'weight': pc['weight'],
             'dimensions': {
-                'length': self.convert_to_meters(pc['length'], pc['unit']),
-                'width': self.convert_to_meters(pc['width'], pc['unit']),
-                'height': self.convert_to_meters(pc['height'], pc['unit']),
+                'length': self.convert_to_centimeters(pc['length'], pc['unit']),
+                'width': self.convert_to_centimeters(pc['width'], pc['unit']),
+                'height': self.convert_to_centimeters(pc['height'], pc['unit']),
             },
             'stock': {
                 'type': sc['type'],
                 'color': sc['color'],
                 'dimensions': {
-                    'length': self.convert_to_meters(sc['length'], sc['unit']),
-                    'width': self.convert_to_meters(sc['width'], sc['unit']),
-                    'height': self.convert_to_meters(sc['height'], sc['unit']),
+                    'length': self.convert_to_centimeters(sc['length'], sc['unit']),
+                    'width': self.convert_to_centimeters(sc['width'], sc['unit']),
+                    'height': self.convert_to_centimeters(sc['height'], sc['unit']),
                 }
             }
         }
