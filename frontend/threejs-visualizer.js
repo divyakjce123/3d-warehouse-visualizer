@@ -21,14 +21,14 @@ class ThreeJSVisualizer {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf8f9fa);
         
-        // Far plane 100000 for large CM-based scenes (1km)
+        // Far plane 100000 to see large warehouses (1km in cm)
         this.camera = new THREE.PerspectiveCamera(
             45,
             this.container.clientWidth / this.container.clientHeight,
             0.1,
             100000 
         );
-        this.camera.position.set(4000, 3000, 4000); // Default position scaled up
+        this.camera.position.set(4000, 3000, 4000); 
         
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -44,7 +44,7 @@ class ThreeJSVisualizer {
         
         this.addLighting();
         
-        // Grid size 50000 (500m), divisions every 1000 units (10m)
+        // Large Grid for CM scale
         this.gridHelper = new THREE.GridHelper(50000, 50, 0x000000, 0x000000);
         this.gridHelper.material.opacity = 0.1;
         this.gridHelper.material.transparent = true;
@@ -75,7 +75,7 @@ class ThreeJSVisualizer {
             side: THREE.DoubleSide
         });
         
-        // Floor size 500m x 500m (50000 units)
+        // Floor 500m x 500m
         const floorGeometry = new THREE.PlaneGeometry(50000, 50000);
         const floor = new THREE.Mesh(floorGeometry, wallMaterial);
         floor.rotation.x = -Math.PI / 2;
@@ -86,10 +86,8 @@ class ThreeJSVisualizer {
         
         this.wallMeshes = [];
         const wallThickness = 20; // 20cm
-        const size = 25000; // 250m from center
-        
-        // Walls 10m high (1000cm)
-        const wallHeight = 1000;
+        const size = 25000; // 250m
+        const wallHeight = 1000; // 10m high
         const wallY = wallHeight / 2;
         
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(size * 2, wallHeight, wallThickness), wallMaterial);
@@ -122,12 +120,11 @@ class ThreeJSVisualizer {
         mainLight.position.set(10000, 20000, 10000);
         mainLight.castShadow = true;
         
-        // Large shadow area for CM scale
-        const d = 50000;
         mainLight.shadow.mapSize.width = 4096;
         mainLight.shadow.mapSize.height = 4096;
         mainLight.shadow.camera.near = 10;
         mainLight.shadow.camera.far = 100000;
+        const d = 50000;
         mainLight.shadow.camera.left = -d;
         mainLight.shadow.camera.right = d;
         mainLight.shadow.camera.top = d;
@@ -149,7 +146,7 @@ class ThreeJSVisualizer {
         this.renderer.domElement.addEventListener('mouseup', () => isDragging = false);
         this.renderer.domElement.addEventListener('mousemove', (event) => {
             if (isDragging && this.selectedObject && this.interactionMode === 'edit') {
-                const deltaX = event.movementX * 10; // Scale movement for CM
+                const deltaX = event.movementX * 10; 
                 const deltaY = event.movementY * 10;
                 this.selectedObject.position.x += deltaX;
                 this.selectedObject.position.z += deltaY;
@@ -233,7 +230,6 @@ class ThreeJSVisualizer {
     fitCameraToScene() {
         const box = new THREE.Box3();
         let hasObjects = false;
-        
         this.scene.children.forEach(child => {
             if(child.userData && (child.userData.type === 'block' || child.userData.type === 'warehouse-floor')) {
                 box.expandByObject(child);
@@ -242,14 +238,12 @@ class ThreeJSVisualizer {
         });
 
         if (!hasObjects) {
-            this.camera.position.set(4000, 3000, 4000);
-            this.controls.reset();
+            this.resetView();
             return;
         }
 
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
-
         const maxDim = Math.max(size.x, size.y, size.z);
         const fov = this.camera.fov * (Math.PI / 180);
         let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
@@ -265,7 +259,7 @@ class ThreeJSVisualizer {
     }
     
     createWarehouseFloor(dimensions) {
-        // Convert input dimensions to CM
+        // Dimensions are already in CM from backend
         const width = this.convertToCentimeters(dimensions.width, dimensions.unit);
         const length = this.convertToCentimeters(dimensions.length, dimensions.unit);
         
@@ -283,7 +277,6 @@ class ThreeJSVisualizer {
         this.scene.add(floor);
         
         const gridSize = Math.max(1000, Math.max(width, length) * 1.5);
-        // Grid steps: divide by 100 for 1m grid lines? No, purely visual.
         this.gridHelper = new THREE.GridHelper(gridSize, 50, 0x000000, 0x000000);
         this.gridHelper.material.opacity = 0.1;
         this.gridHelper.material.transparent = true;
@@ -297,13 +290,11 @@ class ThreeJSVisualizer {
         const blockId = blockData.id;
         
         blockContainer.userData = {
-            id: blockId,
-            type: 'block',
-            name: name,
-            dimensions: dimensions
+            id: blockId, type: 'block', name: name, dimensions: dimensions
         };
         
         const colorHex = parseInt(color.replace('#', ''), 16);
+        
         const blockGeometry = new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length);
         const blockEdges = new THREE.EdgesGeometry(blockGeometry);
         const blockMaterial = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2 });
@@ -317,7 +308,7 @@ class ThreeJSVisualizer {
         
         this.createLabel(blockId, name, {
             x: position.x,
-            y: position.y + dimensions.height + 100, // +100cm label offset
+            y: position.y + dimensions.height + 100,
             z: position.z
         });
         
@@ -352,28 +343,14 @@ class ThreeJSVisualizer {
         rackMesh.receiveShadow = true;
         rackContainer.add(rackMesh);
         
-        const shelfCount = Math.max(3, Math.floor(dimensions.height / 50)); // roughly every 50cm
+        const shelfCount = Math.max(3, Math.floor(dimensions.height / 200)); // shelf every ~2m
         for (let i = 0; i < shelfCount; i++) {
-            const shelfGeometry = new THREE.BoxGeometry(dimensions.width - 5, 2, dimensions.length - 5);
+            const shelfGeometry = new THREE.BoxGeometry(dimensions.width - 5, 5, dimensions.length - 5);
             const shelfMaterial = new THREE.MeshLambertMaterial({ color: 0x718096 });
             const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
-            shelf.position.y = (i * dimensions.height / shelfCount) + 2;
+            shelf.position.y = (i * dimensions.height / shelfCount) + 5;
             rackContainer.add(shelf);
         }
-
-        const uprightGeometry = new THREE.BoxGeometry(5, dimensions.height, 5); // 5cm thick posts
-        const uprightMaterial = new THREE.MeshLambertMaterial({ color: 0x4a5568 });
-        const positions = [
-            { x: -dimensions.width/2 + 2.5, z: -dimensions.length/2 + 2.5 },
-            { x: dimensions.width/2 - 2.5, z: -dimensions.length/2 + 2.5 },
-            { x: -dimensions.width/2 + 2.5, z: dimensions.length/2 - 2.5 },
-            { x: dimensions.width/2 - 2.5, z: dimensions.length/2 - 2.5 }
-        ];
-        positions.forEach(pos => {
-            const upright = new THREE.Mesh(uprightGeometry, uprightMaterial);
-            upright.position.set(pos.x, dimensions.height/2, pos.z);
-            rackContainer.add(upright);
-        });
 
         if (pallet) {
             this.createPallet(pallet, rackContainer);
@@ -381,7 +358,7 @@ class ThreeJSVisualizer {
         
         const labelPosition = {
             x: parentBlock.position.x + position.x,
-            y: position.y + dimensions.height + 20,
+            y: position.y + dimensions.height + 50,
             z: parentBlock.position.z + position.z
         };
         this.createLabel(rackId, rackName, labelPosition);
@@ -448,7 +425,6 @@ class ThreeJSVisualizer {
             if (label) {
                 const worldPosition = new THREE.Vector3();
                 object.getWorldPosition(worldPosition);
-                // Offset adjust
                 if (object.userData.type === 'block') worldPosition.y += object.userData.dimensions.height + 50;
                 else if (object.userData.type === 'rack') worldPosition.y += object.userData.dimensions.height + 20;
                 this.updateLabelPosition(label, worldPosition);
@@ -506,5 +482,8 @@ class ThreeJSVisualizer {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.visualizer = new ThreeJSVisualizer('3d-container');
+    // Small delay to ensure CSS layout settles before three.js init
+    setTimeout(() => {
+        window.visualizer = new ThreeJSVisualizer('3d-container');
+    }, 100);
 });

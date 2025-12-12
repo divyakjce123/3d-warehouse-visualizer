@@ -19,8 +19,6 @@ class WarehouseCalculator:
         return value * self.conversion_factors[unit]
     
     def create_warehouse_layout(self, config):
-        """Create complete warehouse layout with heterogeneous blocks"""
-        
         # 1. Warehouse Dimensions
         wh_dims = config['warehouse_dimensions']
         wh_length = self.convert_to_centimeters(wh_dims['length'], wh_dims['unit'])
@@ -34,7 +32,7 @@ class WarehouseCalculator:
         total_gap_width = block_gap * (num_blocks - 1) if num_blocks > 1 else 0
         available_width = wh_width - total_gap_width
         
-        if available_width <= 0: available_width = 1.0
+        if available_width <= 0: available_width = 100.0 # Safety fallback
         
         block_width = available_width / num_blocks
         block_length = wh_length 
@@ -62,7 +60,7 @@ class WarehouseCalculator:
                 'racks': []
             }
             
-            # 4. Generate Racks with Custom Gaps
+            # 4. Generate Racks
             racks = self.calculate_racks_for_block(block_data['dimensions'], block_conf)
             block_data['racks'] = racks
             
@@ -95,16 +93,13 @@ class WarehouseCalculator:
         
         # Determine maximum total gap width in any single row
         max_row_gap_sum = 0
-        
         for r in range(num_rows):
             current_row_gap_sum = 0
             start_rack_idx = r * racks_per_row
-            
             for c in range(racks_per_row - 1):
                 gap_idx = start_rack_idx + c
                 if gap_idx < len(custom_gaps):
                     current_row_gap_sum += custom_gaps[gap_idx]
-            
             if current_row_gap_sum > max_row_gap_sum:
                 max_row_gap_sum = current_row_gap_sum
 
@@ -113,10 +108,9 @@ class WarehouseCalculator:
         avail_l = block_dims['length'] - gap_f - gap_b
         
         rack_w = (avail_w - max_row_gap_sum) / racks_per_row
-        if rack_w < 1.0: rack_w = 10.0 # Safety fallback (10cm)
+        if rack_w < 10.0: rack_w = 50.0 # Safety fallback (50cm)
         
-        # Standard spacing for rows (150 cm / 1.5m aisle)
-        row_gap_std = 150.0 
+        row_gap_std = 150.0 # 150cm aisle
         total_row_gaps = row_gap_std * (num_rows - 1) if num_rows > 1 else 0
         rack_l = (avail_l - total_row_gaps) / num_rows
         

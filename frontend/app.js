@@ -31,12 +31,12 @@ class WarehouseApp {
                                 </div>
                                 <div class="rack-gaps-container" id="rack-gaps-block-${i}"></div>
                                 <div class="dimension-row">
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Front Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-front" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Back Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-back" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Front Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-front" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Back Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-back" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
                                 </div>
                                 <div class="dimension-row">
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Left Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-left" value="50"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Right Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-right" value="50"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Left Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-left" value="50"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Right Wall Gap</span></div><div class="dimension-input-button"><input type="number" class="b-gap-right" value="50"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
                                 </div>
                             </div>
                         </div>
@@ -48,9 +48,9 @@ class WarehouseApp {
                                     <div class="dimension-button-group"><div class="dimension-label"><span>Weight (kg)</span></div><div class="number-input-button"><input type="number" class="b-pallet-weight" value="20"></div></div>
                                 </div>
                                 <div class="dimension-row">
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Length</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-l" value="120"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Width</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-w" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Height</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-h" value="15"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Length</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-l" value="120"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Width</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-w" value="100"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Height</span></div><div class="dimension-input-button"><input type="number" class="b-pallet-h" value="15"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
                                 </div>
                             </div>
                         </div>
@@ -61,9 +61,9 @@ class WarehouseApp {
                                     <div class="dimension-button-group"><div class="dimension-label"><span>Stock Type</span></div><div class="type-select-button"><select class="b-stock-type"><option value="hell_classic">Hell Classic</option><option value="hell_apple">Hell Apple</option><option value="hell_multi">Hell Multi</option></select></div></div>
                                 </div>
                                 <div class="dimension-row">
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Length</span></div><div class="dimension-input-button"><input type="number" class="b-stock-l" value="40"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Width</span></div><div class="dimension-input-button"><input type="number" class="b-stock-w" value="30"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
-                                    <div class="dimension-button-group"><div class="dimension-label"><span>Height</span></div><div class="dimension-input-button"><input type="number" class="b-stock-h" value="20"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Length</span></div><div class="dimension-input-button"><input type="number" class="b-stock-l" value="40"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Width</span></div><div class="dimension-input-button"><input type="number" class="b-stock-w" value="30"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
+                                    <div class="dimension-button-group"><div class="dimension-label"><span>Height</span></div><div class="dimension-input-button"><input type="number" class="b-stock-h" value="20"><div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div></div></div>
                                 </div>
                                 <div class="dimension-row">
                                     <div class="dimension-button-group">
@@ -95,14 +95,14 @@ class WarehouseApp {
         container.innerHTML = '';
         if (numRacks <= 1) return;
 
-        let html = '<div class="dimension-label" style="margin-top:10px; margin-bottom:5px;"><span>Gaps Between Specific Racks (cm)</span></div><div class="dimension-row" style="flex-wrap: wrap; gap: 10px;">';
+        let html = '<div class="dimension-label" style="margin-top:10px; margin-bottom:5px;"><span>Gaps Between Specific Racks (cm)</span></div><div class="dimension-row" style="flex-direction: column; flex-wrap: nowrap; gap: 10px;">';
         for (let i = 1; i < numRacks; i++) {
             html += `
                 <div class="dimension-button-group" style="flex: 0 0 45%; min-width: 120px;">
                     <div class="dimension-label" style="font-size: 11px;"><span>Gap Rack ${i}-${i+1}</span></div>
                     <div class="dimension-input-button">
                         <input type="number" class="b-custom-gap" data-gap-index="${i-1}" value="50">
-                        <div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option></select></div>
+                        <div class="unit-dropdown"><select class="unit-select"><option value="cm">cm</option><option value="m">m</option><option value="km">km</option><option value="in">in</option><option value="ft">ft</option><option value="yd">yd</option><option value="mi">mi</option></select></div>
                     </div>
                 </div>
             `;
