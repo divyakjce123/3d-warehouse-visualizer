@@ -13,35 +13,47 @@ class WarehouseCalculator:
         return value * self.conversion_factors[unit]
     
     def create_warehouse_layout(self, config):
-        """Create complete warehouse layout with heterogeneous blocks"""
+        """
+        Main entry point.
+        Calculates the layout for the entire warehouse, dividing it into blocks
+        and then delegating rack calculation to each specific block config.
+        """
         
-        # 1. Warehouse Dimensions
+        # 1. Parse Warehouse Dimensions
         wh_dims = config['warehouse_dimensions']
-        wh_length = self.convert_to_meters(wh_dims['length'], wh_dims['unit'])
-        wh_width = self.convert_to_meters(wh_dims['width'], wh_dims['unit'])
-        wh_height = self.convert_to_meters(wh_dims['height'], wh_dims['unit'])
+        wh_L = self.convert_to_meters(wh_dims['length'], wh_dims['unit'])
+        wh_W = self.convert_to_meters(wh_dims['width'], wh_dims['unit'])
+        wh_H = self.convert_to_meters(wh_dims['height'], wh_dims['unit'])
         
+        # 2. Divide Warehouse into Blocks
         num_blocks = config['num_blocks']
         block_gap = self.convert_to_meters(config['block_gap'], config['block_gap_unit'])
         
-        # 2. Calculate Block Sizes (Evenly divided along Width)
-        # Available width = Total Width - (Gaps between blocks)
+        # Calculate total width consumed by gaps
         total_gap_width = block_gap * (num_blocks - 1) if num_blocks > 1 else 0
-        available_width = wh_width - total_gap_width
         
+        # Remaining width for blocks
+        available_width = wh_W - total_gap_width
+        if available_width <= 0:
+            raise ValueError("Block gaps are too large for the warehouse width.")
+            
         block_width = available_width / num_blocks
-        block_length = wh_length 
+        block_length = wh_L  # Blocks span the full length of the warehouse
         
         blocks_layout = []
         
-        # Calculate starting X to center everything
-        total_occupied_width = (block_width * num_blocks) + total_gap_width
-        start_x = -total_occupied_width / 2 + block_width / 2
+        # Calculate starting X to center the group of blocks in the 3D scene (0,0,0 is center)
+        # Total structure width = num_blocks * width + gaps
+        total_structure_width = (block_width * num_blocks) + total_gap_width
+        start_x = -total_structure_width / 2 + (block_width / 2)
         
-        # 3. Generate Each Block
+        # 3. Process Each Block Config
+        # We iterate through the user-provided configs for each block
         for i, block_conf in enumerate(config['block_configs']):
-            block_id = f"block_{i + 1}"
+            # Calculate position for this specific block
             x_offset = start_x + i * (block_width + block_gap)
+            
+            block_id = f"block_{i + 1}"
             
             block_data = {
                 'id': block_id,
@@ -50,13 +62,13 @@ class WarehouseCalculator:
                 'dimensions': {
                     'width': block_width,
                     'length': block_length,
-                    'height': wh_height
+                    'height': wh_H
                 },
                 'color': self.get_block_color(i),
-                'racks': []
+                'racks': [] # Will be filled below
             }
             
-            # 4. Generate Racks based on specific config
+            # Calculate Racks specific to THIS block's configuration
             racks = self.calculate_racks_for_block(block_data['dimensions'], block_conf)
             block_data['racks'] = racks
             
@@ -68,116 +80,133 @@ class WarehouseCalculator:
         }
 
     def calculate_racks_for_block(self, block_dims, block_conf):
+        """
+        Calculates rack positions inside a single block using its specific gaps and counts.
+        """
         racks = []
         rack_cfg = block_conf['rack_config']
         
-        # Wall gaps
-        gap_f = self.convert_to_meters(rack_cfg['gap_front'], rack_cfg['wall_gap_unit'])
-        gap_b = self.convert_to_meters(rack_cfg['gap_back'], rack_cfg['wall_gap_unit'])
-        gap_l = self.convert_to_meters(rack_cfg['gap_left'], rack_cfg['wall_gap_unit'])
-        gap_r = self.convert_to_meters(rack_cfg['gap_right'], rack_cfg['wall_gap_unit'])
+        # Convert Wall Gaps
+        gap_unit = rack_cfg['wall_gap_unit']
+        gap_f = self.convert_to_meters(rack_cfg['gap_front'], gap_unit)
+        gap_b = self.convert_to_meters(rack_cfg['gap_back'], gap_unit)
+        gap_l = self.convert_to_meters(rack_cfg['gap_left'], gap_unit)
+        gap_r = self.convert_to_meters(rack_cfg['gap_right'], gap_unit)
         
-        # Get Custom Gaps list (converted to meters)
-        # Logic: Gap index 0 is between Rack 1 and 2. Index 1 is between Rack 2 and 3.
+        # Convert Custom Rack Gaps (List)
+        # custom_gaps[0] is gap between rack 1 & 2
         custom_gaps = [self.convert_to_meters(g, rack_cfg['gap_unit']) for g in rack_cfg.get('custom_gaps', [])]
         
-        # Layout info
         num_rows = rack_cfg['num_rows']
         num_racks_total = rack_cfg['num_racks']
         num_floors = rack_cfg['num_floors']
         
-        racks_per_row = math.ceil(num_racks_total / num_rows) if num_rows > 0 else 0
+        if num_rows < 1: num_rows = 1
+        racks_per_row = math.ceil(num_racks_total / num_rows)
         if racks_per_row == 0: return []
+
+        # --- Calculate Rack Dimensions ---
+        # We need to fit 'racks_per_row' racks into the available width.
+        # The width taken by gaps varies per row, but racks usually have uniform width.
+        # We find the 'tightest' fit required (max total gaps in a row) to determine safe rack width.
         
-        # --- Calculate Rack Dimensions using variable gaps ---
-        
-        # 1. Determine the 'tightest' row (the one with the largest total gap distance)
-        # to ensure racks fit in the block.
         max_row_gap_sum = 0
+        
         for r in range(num_rows):
             current_row_gap_sum = 0
             start_rack_idx = r * racks_per_row
             
-            # Sum gaps for this row. We need (racks_per_row - 1) gaps.
+            # Sum the specific gaps for this row
+            # We need (racks_per_row - 1) gaps
             for c in range(racks_per_row - 1):
-                # Calculate global gap index relative to the total list of gaps
-                # If rack 1 is at 0, gap 1-2 is at index 0.
-                global_rack_index = start_rack_idx + c
-                if global_rack_index < len(custom_gaps):
-                    current_row_gap_sum += custom_gaps[global_rack_index]
+                # The gap between global rack index N and N+1 is stored at custom_gaps[N]?
+                # No, custom_gaps[0] is 1-2. 
+                # So gap after rack N (0-indexed) is custom_gaps[N].
+                
+                # Global index of the rack to the LEFT of the gap
+                gap_index = start_rack_idx + c
+                
+                if gap_index < len(custom_gaps):
+                    current_row_gap_sum += custom_gaps[gap_index]
             
             if current_row_gap_sum > max_row_gap_sum:
                 max_row_gap_sum = current_row_gap_sum
 
-        # 2. Calculate dimensions
         avail_w = block_dims['width'] - gap_l - gap_r
         avail_l = block_dims['length'] - gap_f - gap_b
         
-        # Rack Width = (Available Width - Total Gaps) / Racks per row
+        # Rack Width
         rack_w = (avail_w - max_row_gap_sum) / racks_per_row
-        if rack_w < 0: rack_w = 0.5 # Fallback if gaps are too large
+        if rack_w < 0.1: rack_w = 0.5 # Safety fallback if config is impossible
         
-        # Rack Length (Rows) - Standard spacing for rows
-        row_gap_std = 1.0 
-        total_row_gaps = row_gap_std * (num_rows - 1) if num_rows > 1 else 0
+        # Rack Length (Depth) - Uniform spacing for rows
+        row_gap_std = 1.5 # 1.5m aisle between rows
+        total_row_gaps = row_gap_std * (num_rows - 1)
         rack_l = (avail_l - total_row_gaps) / num_rows
         
-        rack_h = block_dims['height'] * 0.8
+        # Rack Height
+        rack_h = block_dims['height'] * 0.75
         floor_h = rack_h / num_floors
         
-        # 3. Generate Positions
-        global_rack_count = 0
+        # --- Generate Rack Positions ---
+        global_cnt = 0
         
         for r in range(num_rows):
-            # Reset X cursor for new row
-            current_x_offset = -block_dims['width']/2 + gap_l
+            # Reset X cursor to left wall gap
+            current_x = -block_dims['width']/2 + gap_l
             
             for c in range(racks_per_row):
-                if global_rack_count >= num_racks_total: break
+                if global_cnt >= num_racks_total: break
                 
-                # Determine gap before this rack (none for first column)
-                gap_before = 0
+                # Add gap BEFORE placing rack (except for first rack in row)
                 if c > 0:
-                    # The gap before rack N is the gap at index (N-1)
-                    # e.g. For Rack 2 (index 1), we want gap index 0 (1-2)
-                    gap_idx = global_rack_count - 1
+                    # Gap between previous rack and this one
+                    # Previous rack index was global_cnt - 1
+                    gap_idx = global_cnt - 1
+                    gap_val = 0
                     if gap_idx < len(custom_gaps):
-                        gap_before = custom_gaps[gap_idx]
-                
-                current_x_offset += gap_before
-                
-                # Center position of current rack
-                x_pos = current_x_offset + (rack_w / 2)
-                
-                z_start = -block_dims['length']/2 + gap_f + (rack_l/2)
-                z_pos = z_start + r * (rack_l + row_gap_std)
-                
-                rack_id = f"rack_{r+1}_{c+1}"
-                
-                for f in range(num_floors):
-                    y_pos = (f * floor_h) + (floor_h/2)
+                        gap_val = custom_gaps[gap_idx]
                     
-                    rack_data = {
-                        'id': f"{rack_id}_f{f+1}",
-                        'position': {'x': x_pos, 'y': y_pos, 'z': z_pos},
-                        'dimensions': {
-                            'width': rack_w,
-                            'length': rack_l,
-                            'height': floor_h
-                        },
+                    current_x += gap_val
+                
+                # Calculate center position for this rack
+                # current_x is at the left edge of the rack
+                pos_x = current_x + (rack_w / 2)
+                
+                # Z position (Length)
+                # Starts at -length/2 + front gap + half rack length + row offset
+                pos_z = (-block_dims['length']/2) + gap_f + (rack_l / 2) + (r * (rack_l + row_gap_std))
+                
+                rack_name = f"Rack {global_cnt + 1} (R{r+1} C{c+1})"
+                
+                # Generate Floors
+                for f in range(num_floors):
+                    pos_y = (f * floor_h) + (floor_h / 2)
+                    
+                    rack_id = f"{block_dims['width']}_{global_cnt}_{f}" # unique string
+                    
+                    rack_entry = {
+                        'id': f"rack_{global_cnt}_f{f}",
+                        'name': rack_name,
+                        'position': {'x': pos_x, 'y': pos_y, 'z': pos_z},
+                        'dimensions': {'width': rack_w, 'length': rack_l, 'height': floor_h},
                         'floor': f+1, 'row': r+1, 'column': c+1
                     }
                     
-                    # Add pallet if position matches user input
+                    # Check if Stock should be placed here
                     stock_pos = block_conf['stock_config']['position']
-                    if stock_pos['floor'] == f+1 and stock_pos['row'] == r+1 and stock_pos['col'] == c+1:
-                        rack_data['pallet'] = self.create_pallet_data(block_conf)
+                    # User input is 1-based (Floor 1, Row 1, Col 1)
+                    if (stock_pos['floor'] == f+1 and 
+                        stock_pos['row'] == r+1 and 
+                        stock_pos['col'] == c+1):
                         
-                    racks.append(rack_data)
+                        rack_entry['pallet'] = self.create_pallet_data(block_conf)
+                    
+                    racks.append(rack_entry)
                 
-                # Advance cursor past this rack
-                current_x_offset += rack_w
-                global_rack_count += 1
+                # Advance X cursor past this rack
+                current_x += rack_w
+                global_cnt += 1
                 
         return racks
 
