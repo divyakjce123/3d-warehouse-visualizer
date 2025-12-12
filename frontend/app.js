@@ -4,6 +4,9 @@ class WarehouseApp {
     this.apiBaseUrl = "http://localhost:5000/api";
     this.currentWarehouse = null;
     this.selectedObject = null;
+    this.previewTimeout = null;
+    this.previewDelay = 700; // ms debounce for live preview
+    this.pendingLayout = null; // store layout if visualizer not ready yet
     this.palletColors = {
       wooden: "#8B4513",
       plastic: "#1E90FF",
@@ -188,6 +191,11 @@ class WarehouseApp {
           parent.style.boxShadow = "none";
         }
       });
+      // Live preview on input change (debounced)
+      input.addEventListener("input", () => {
+        // Only schedule preview if visualizer exists
+        if (window.visualizer) this.schedulePreview();
+      });
     });
   }
 
@@ -244,6 +252,15 @@ class WarehouseApp {
         if (window.visualizer)
           window.visualizer.setInteractionMode(e.target.value);
       });
+
+    // If visualizer is created after app, listen and apply pending layout
+    window.addEventListener("visualizer-ready", () => {
+      if (this.pendingLayout && window.visualizer) {
+        console.debug("Applying pending layout after visualizer-ready");
+        this.updateVisualization(this.pendingLayout);
+        this.pendingLayout = null;
+      }
+    });
   }
 
   async createWarehouse() {
@@ -271,6 +288,30 @@ class WarehouseApp {
       this.updateStatus(`Error: ${error.message}`, "error");
     } finally {
       this.showLoading(false);
+    }
+  }
+
+  schedulePreview() {
+    if (this.previewTimeout) clearTimeout(this.previewTimeout);
+    this.previewTimeout = setTimeout(() => this.previewWarehouse(), this.previewDelay);
+  }
+
+  async previewWarehouse() {
+    try {
+      const warehouseConfig = this.getWarehouseConfig();
+      const response = await fetch(`${this.apiBaseUrl}/warehouse/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(warehouseConfig),
+      });
+      const result = await response.json();
+      if (result && result.success && window.visualizer) {
+        window.visualizer.renderWarehouse(result.layout);
+        document.getElementById("no-layout-message").style.display = "none";
+      }
+    } catch (err) {
+      // Fail silently for preview to avoid spamming the user
+      console.debug("Preview generation failed:", err);
     }
   }
 
@@ -360,13 +401,40 @@ class WarehouseApp {
     };
   }
 
-  updateVisualization(layout) {
-    if (window.visualizer) {
-      window.visualizer.renderWarehouse(layout);
-      this.updateSelectedInfo(null);
-      document.getElementById("no-layout-message").style.display = "none";
+//   updateVisualization(layout) {
+//     console.log("updateVisualization called with layout:", layout);
+//     if (window.visualizer) {
+//       try {
+//         window.visualizer.renderWarehouse(layout);
+//         this.updateSelectedInfo(null);
+//         document.getElementById("no-layout-message").style.display = "none";
+//       } catch (err) {
+//         console.error("Visualizer.renderWarehouse error:", err);
+//       }
+//     } else {
+//       console.warn("Visualizer not available when updateVisualization called, saving layout");
+//       this.pendingLayout = layout;
+//     }
+//   }
+
+updateVisualization(layout) {
+    console.log("updateVisualization called with layout:", layout);
+    
+    // Wait for visualizer to be ready
+    if (!window.visualizer) {
+        console.error("Visualizer not available yet. Waiting...");
+        setTimeout(() => this.updateVisualization(layout), 100);
+        return;
     }
-  }
+    
+    try {
+        window.visualizer.renderWarehouse(layout);
+        this.updateSelectedInfo(null);
+        document.getElementById("no-layout-message").style.display = "none";
+    } catch (err) {
+        console.error("Visualizer.renderWarehouse error:", err);
+    }
+}
 
   showLoading(show) {
     const loadingOverlay = document.getElementById("loading-overlay");
