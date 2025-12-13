@@ -1,0 +1,115 @@
+<div class="configuration-panel">
+  <h2><i class="fas fa-cogs"></i> Configuration Panel</h2>
+
+  <div class="generate-section">
+    <button (click)="onGenerate()" class="btn btn-primary btn-large">
+      <i class="fas fa-magic"></i> GENERATE 3D LAYOUT
+    </button>
+  </div>
+
+  <div class="collapsible-section active">
+    <div class="section-header">
+      <h3><i class="fas fa-building"></i> 1. Warehouse Dimensions</h3>
+    </div>
+    <div class="section-content">
+      <div class="dimension-row">
+        <div class="dimension-button-group">
+          <label>Length</label>
+          <div class="dimension-input-button">
+            <input type="number" [(ngModel)]="config.warehouse_dimensions.length">
+            <select [(ngModel)]="config.warehouse_dimensions.unit" class="unit-select">
+              <option *ngFor="let u of units" [value]="u">{{u}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="dimension-button-group">
+            <label>Width</label>
+            <div class="dimension-input-button">
+              <input type="number" [(ngModel)]="config.warehouse_dimensions.width">
+              <select [(ngModel)]="config.warehouse_dimensions.unit" class="unit-select">
+                <option *ngFor="let u of units" [value]="u">{{u}}</option>
+              </select>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="collapsible-section active" style="margin-top: 15px;">
+    <div class="section-header">
+        <h3><i class="fas fa-th-large"></i> 2. Blocks Master</h3>
+    </div>
+    <div class="section-content">
+        <div class="dimension-row">
+            <div class="dimension-button-group">
+                <label>Num Blocks</label>
+                <div class="number-input-button">
+                    <input type="number" [(ngModel)]="config.num_blocks" (change)="updateBlockCount()" min="1" max="20">
+                </div>
+            </div>
+            <div class="dimension-button-group">
+                <label>Block Gap</label>
+                <div class="dimension-input-button">
+                    <input type="number" [(ngModel)]="config.block_gap">
+                    <select [(ngModel)]="config.block_gap_unit" class="unit-select">
+                        <option *ngFor="let u of units" [value]="u">{{u}}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div *ngFor="let block of config.block_configs; let i = index" class="collapsible-section" [class.active]="!block.collapsed">
+    <div class="section-header" (click)="block.collapsed = !block.collapsed">
+      <h3><i class="fas fa-cubes"></i> Block {{i + 1}} Config</h3>
+      <i class="fas" [class.fa-chevron-down]="block.collapsed" [class.fa-chevron-up]="!block.collapsed"></i>
+    </div>
+    
+    <div class="section-content" *ngIf="!block.collapsed">
+      <div class="sub-section">
+        <h4>Racks Configuration</h4>
+        <div class="dimension-row">
+            <div class="dimension-button-group">
+                <label>Racks</label>
+                <input type="number" [(ngModel)]="block.rack_config.num_racks" (change)="updateRackGaps(block)" class="form-control">
+            </div>
+            <div class="dimension-button-group">
+                <label>Rows</label>
+                <input type="number" [(ngModel)]="block.rack_config.num_rows" class="form-control">
+            </div>
+            <div class="dimension-button-group">
+                <label>Floors</label>
+                <input type="number" [(ngModel)]="block.rack_config.num_floors" class="form-control">
+            </div>
+        </div>
+        
+        <div *ngIf="block.rack_config.custom_gaps.length > 0">
+            <label style="font-size: 12px; margin-top: 10px; display:block;">Gaps Between Racks</label>
+            <div class="dimension-row">
+                <div *ngFor="let gap of block.rack_config.custom_gaps; let gIndex = index; trackBy: indexTracker" class="dimension-button-group">
+                    <label style="font-size: 10px">Gap {{gIndex+1}}-{{gIndex+2}}</label>
+                    <input type="number" [(ngModel)]="block.rack_config.custom_gaps[gIndex]" class="form-control">
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="sub-section">
+          <h4>Stock Configuration</h4>
+          <div class="dimension-row">
+              <div class="dimension-button-group">
+                  <label>Type</label>
+                  <select [(ngModel)]="block.stock_config.type" class="form-control">
+                      <option *ngFor="let type of stockTypes" [value]="type.value">{{type.label}}</option>
+                  </select>
+              </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-buttons">
+      <button (click)="onReset()" class="btn btn-danger">Reset All</button>
+  </div>
+</div>

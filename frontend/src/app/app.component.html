@@ -1,0 +1,19 @@
+<div class="header">
+  <div class="logo">
+    <i class="fas fa-warehouse"></i>
+    <h1>Warehouse 3D Layout Planner</h1>
+  </div>
+  <div class="header-info">
+    <p>Design your warehouse layout in 3D</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar-wrapper">
+    <app-sidebar (generate)="onGenerate($event)" (reset)="onReset()"></app-sidebar>
+  </div>
+
+  <div class="main-content">
+    <app-viewer #viewer [isLoading]="loading"></app-viewer>
+  </div>
+</div>
