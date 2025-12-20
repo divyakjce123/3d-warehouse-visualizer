@@ -1,0 +1,249 @@
+<div class="block-config-card">
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">{{ getBlockInfo() }}</h6>
+      <span class="badge bg-light text-dark">
+        {{ pallets.length }} Pallets
+      </span>
+    </div>
+    
+    <div class="card-body">
+      <!-- Racks Configuration Section -->
+      <div class="racks-config-section mb-4">
+        <h6 class="section-title text-primary mb-3">
+          <i class="fas fa-warehouse me-2"></i>Racks Configuration
+        </h6>
+        
+        <div class="row g-3">
+          <!-- Number of Floors -->
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Number of Floors</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.num_floors"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="1" 
+                     max="20">
+              <span class="input-group-text">F</span>
+            </div>
+            <div class="form-text">Vertical divisions</div>
+          </div>
+          
+          <!-- Number of Rows -->
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Number of Rows</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.num_rows"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="1" 
+                     max="50">
+              <span class="input-group-text">R</span>
+            </div>
+            <div class="form-text">Rows per floor</div>
+          </div>
+          
+          <!-- Number of Racks -->
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Number of Racks</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.num_racks"
+                     (ngModelChange)="updateRackCount()"
+                     min="1" 
+                     max="100">
+              <span class="input-group-text">C</span>
+            </div>
+            <div class="form-text">Columns per row</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Rack Gaps Section -->
+      <div class="rack-gaps-section mb-4" *ngIf="rackGaps.length > 0">
+        <h6 class="section-title text-primary mb-3">
+          <i class="fas fa-exchange-alt me-2"></i>Rack Gaps
+        </h6>
+        
+        <div class="rack-gaps-list">
+          <div *ngFor="let gap of rackGaps; let i = index" class="rack-gap-item mb-2">
+            <div class="row g-2 align-items-center">
+              <div class="col-5">
+                <label class="form-label small">{{ getRackGapLabel(i) }}</label>
+              </div>
+              <div class="col-4">
+                <input type="number" 
+                       class="form-control form-control-sm" 
+                       [(ngModel)]="gap.value"
+                       (ngModelChange)="onRackConfigChange()"
+                       min="0" 
+                       step="0.1">
+              </div>
+              <div class="col-3">
+                <select class="form-select form-select-sm" 
+                        [(ngModel)]="gap.unit"
+                        (ngModelChange)="onRackConfigChange()">
+                  <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-text">
+          Total gaps width: {{ getTotalGapsWidth() | number:'1.0-2' }} cm
+        </div>
+      </div>
+      
+      <!-- Wall Gaps Section -->
+      <div class="wall-gaps-section mb-4">
+        <h6 class="section-title text-primary mb-3">
+          <i class="fas fa-border-all me-2"></i>Wall Gaps
+        </h6>
+        
+        <div class="row g-3">
+          <!-- Front Wall Gap -->
+          <div class="col-md-6">
+            <label class="form-label small">Front Wall Gap</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.gap_front"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="0" 
+                     step="0.1">
+              <select class="form-select" 
+                      style="max-width: 80px;"
+                      [(ngModel)]="rackConfig.wall_gap_unit"
+                      (ngModelChange)="onRackConfigChange()">
+                <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Back Wall Gap -->
+          <div class="col-md-6">
+            <label class="form-label small">Back Wall Gap</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.gap_back"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="0" 
+                     step="0.1">
+              <select class="form-select" 
+                      style="max-width: 80px;"
+                      [(ngModel)]="rackConfig.wall_gap_unit"
+                      (ngModelChange)="onRackConfigChange()">
+                <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Left Wall Gap -->
+          <div class="col-md-6">
+            <label class="form-label small">Left Wall Gap</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.gap_left"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="0" 
+                     step="0.1">
+              <select class="form-select" 
+                      style="max-width: 80px;"
+                      [(ngModel)]="rackConfig.wall_gap_unit"
+                      (ngModelChange)="onRackConfigChange()">
+                <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Right Wall Gap -->
+          <div class="col-md-6">
+            <label class="form-label small">Right Wall Gap</label>
+            <div class="input-group input-group-sm">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="rackConfig.gap_right"
+                     (ngModelChange)="onRackConfigChange()"
+                     min="0" 
+                     step="0.1">
+              <select class="form-select" 
+                      style="max-width: 80px;"
+                      [(ngModel)]="rackConfig.wall_gap_unit"
+                      (ngModelChange)="onRackConfigChange()">
+                <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-text mt-2">
+          All wall gaps use the same unit for consistency
+        </div>
+      </div>
+      
+      <!-- Pallet Configuration Section -->
+      <div class="pallet-config-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="section-title text-success mb-0">
+            <i class="fas fa-pallet me-2"></i>Pallet Configuration
+          </h6>
+          <div>
+            <span class="badge bg-success me-2">
+              {{ getTotalPalletsWeight() | number:'1.0-0' }} kg
+            </span>
+            <button class="btn btn-success btn-sm" 
+                    (click)="onAddPallet()">
+              <i class="fas fa-plus me-1"></i>Add Pallet
+            </button>
+          </div>
+        </div>
+        
+        <!-- Pallet List -->
+        <div class="pallets-list" *ngIf="pallets.length > 0">
+          <div *ngFor="let pallet of pallets; let i = index" 
+               class="pallet-item mb-3">
+            <app-pallet-config
+              [pallet]="pallet"
+              [palletIndex]="i"
+              [blockIndex]="blockIndex"
+              [maxFloors]="rackConfig.num_floors"
+              [maxRows]="rackConfig.num_rows"
+              [maxRacks]="rackConfig.num_racks"
+              (palletChange)="onPalletsChange()"
+              (removePallet)="onRemovePallet(i)">
+            </app-pallet-config>
+          </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div *ngIf="pallets.length === 0" class="empty-state text-center py-4">
+          <i class="fas fa-pallet fa-3x text-muted mb-3"></i>
+          <p class="text-muted mb-0">No pallets added yet. Click "Add Pallet" to start.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Card Footer -->
+    <div class="card-footer bg-light">
+      <div class="row">
+        <div class="col-md-6">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Block ID: B{{ blockIndex + 1 }}
+          </small>
+        </div>
+        <div class="col-md-6 text-end">
+          <small class="text-muted">
+            Total: {{ pallets.length }} pallet(s)
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
