@@ -102,22 +102,22 @@
         </div>
       </div>
 
-      <!-- Blocks Configuration -->
+      <!-- Subwarehouses Configuration -->
       <div class="card mb-3">
         <div class="card-header bg-primary text-white">
-          <h6 class="mb-0">Blocks Configuration</h6>
+          <h6 class="mb-0">Subwarehouses Configuration</h6>
         </div>
         <div class="card-body">
           <div class="row g-2 mb-2 align-items-center">
             <div class="col-6">
-              <label class="form-label small mb-0">Number of Blocks</label>
+              <label class="form-label small mb-0">Number of Subwarehouses</label>
             </div>
             <div class="col-6">
               <input
                 type="number"
                 class="form-control form-control-sm"
-                [(ngModel)]="warehouseConfig.num_blocks"
-                (blur)="onNumBlocksBlur()"
+                [(ngModel)]="warehouseConfig.num_subwarehouses"
+                (blur)="onNumSubwarehousesBlur()"
                 min="1"
                 max="20"
               />
@@ -126,13 +126,13 @@
 
           <div class="row g-2 mb-3 align-items-center">
             <div class="col-4">
-              <label class="form-label small mb-0">Block Gap</label>
+              <label class="form-label small mb-0">Subwarehouse Gap</label>
             </div>
             <div class="col-4">
               <input
                 type="number"
                 class="form-control form-control-sm"
-                [(ngModel)]="warehouseConfig.block_gap"
+                [(ngModel)]="warehouseConfig.subwarehouse_gap"
                 min="0"
                 step="any"
               />
@@ -140,7 +140,7 @@
             <div class="col-4">
               <select
                 class="form-select form-select-sm"
-                [(ngModel)]="warehouseConfig.block_gap_unit"
+                [(ngModel)]="warehouseConfig.subwarehouse_gap_unit"
               >
                 <option value="cm">cm</option>
                 <option value="m">m</option>
@@ -151,24 +151,24 @@
             </div>
           </div>
 
-          <!-- Dynamic Blocks Configuration -->
-          <div class="accordion" id="blocksAccordion">
+          <!-- Dynamic Subwarehouses Configuration -->
+          <div class="accordion" id="subwarehousesAccordion">
             <div
               class="accordion-item"
-              *ngFor="let block of blocks; let i = index; trackBy: trackByBlockIndex"
+              *ngFor="let subwarehouse of subwarehouses; let i = index; trackBy: trackBySubwarehouseIndex"
             >
               <h2 class="accordion-header">
                 <button
                   class="accordion-button"
                   type="button"
                   data-bs-toggle="collapse"
-                  [attr.data-bs-target]="'#blockCollapse' + i"
+                  [attr.data-bs-target]="'#subwarehouseCollapse' + i"
                 >
-                  Block {{ i + 1 }} Configuration
+                  Subwarehouse {{ i + 1 }} Configuration
                 </button>
               </h2>
               <div
-                [id]="'blockCollapse' + i"
+                [id]="'subwarehouseCollapse' + i"
                 class="accordion-collapse collapse show"
               >
                 <div class="accordion-body">
@@ -183,7 +183,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.rackConfig.num_floors"
+                        [(ngModel)]="subwarehouse.rackConfig.num_floors"
                         min="1"
                         max="20"
                         step="1"
@@ -199,7 +199,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.rackConfig.num_rows"
+                        [(ngModel)]="subwarehouse.rackConfig.num_rows"
                         min="1"
                         max="50"
                         step="1"
@@ -215,7 +215,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.rackConfig.num_racks"
+                        [(ngModel)]="subwarehouse.rackConfig.num_racks"
                         min="1"
                         max="20"
                         step="1"
@@ -225,10 +225,10 @@
                   </div>
 
                   <!-- Rack Gaps - Only show if more than 1 rack -->
-                  <div *ngIf="block.rackConfig.custom_gaps.length > 0">
+                  <div *ngIf="subwarehouse.rackConfig.custom_gaps.length > 0">
                     <h6 class="text-primary small mt-3 mb-2">Rack Gaps</h6>
                     <div
-                      *ngFor="let gap of block.rackConfig.custom_gaps; let j = index; trackBy: trackByGapIndex"
+                      *ngFor="let gap of subwarehouse.rackConfig.custom_gaps; let j = index; trackBy: trackByGapIndex"
                       class="row g-2 mb-2 align-items-center"
                     >
                       <div class="col-5">
@@ -238,14 +238,14 @@
                         <input
                           type="number"
                           class="form-control form-control-sm"
-                          [(ngModel)]="block.rackConfig.custom_gaps[j]"
+                          [(ngModel)]="subwarehouse.rackConfig.custom_gaps[j]"
                           min="0"
                           step="any"
                         />
                       </div>
                       <div class="col-3">
                         <span class="form-control-plaintext form-control-sm text-muted">
-                          {{ block.rackConfig.wall_gap_unit }}
+                          {{ subwarehouse.rackConfig.wall_gap_unit }}
                         </span>
                       </div>
                     </div>
@@ -261,7 +261,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.wallGaps.front.value"
+                        [(ngModel)]="subwarehouse.wallGaps.front.value"
                         min="0"
                         step="any"
                       />
@@ -269,7 +269,7 @@
                     <div class="col-3">
                       <select
                         class="form-select form-select-sm"
-                        [(ngModel)]="block.wallGaps.front.unit"
+                        [(ngModel)]="subwarehouse.wallGaps.front.unit"
                       >
                         <option value="cm">cm</option>
                         <option value="m">m</option>
@@ -288,7 +288,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.wallGaps.back.value"
+                        [(ngModel)]="subwarehouse.wallGaps.back.value"
                         min="0"
                         step="any"
                       />
@@ -296,7 +296,7 @@
                     <div class="col-3">
                       <select
                         class="form-select form-select-sm"
-                        [(ngModel)]="block.wallGaps.back.unit"
+                        [(ngModel)]="subwarehouse.wallGaps.back.unit"
                       >
                         <option value="cm">cm</option>
                         <option value="m">m</option>
@@ -315,7 +315,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.wallGaps.left.value"
+                        [(ngModel)]="subwarehouse.wallGaps.left.value"
                         min="0"
                         step="any"
                       />
@@ -323,7 +323,7 @@
                     <div class="col-3">
                       <select
                         class="form-select form-select-sm"
-                        [(ngModel)]="block.wallGaps.left.unit"
+                        [(ngModel)]="subwarehouse.wallGaps.left.unit"
                       >
                         <option value="cm">cm</option>
                         <option value="m">m</option>
@@ -342,7 +342,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="block.wallGaps.right.value"
+                        [(ngModel)]="subwarehouse.wallGaps.right.value"
                         min="0"
                         step="any"
                       />
@@ -350,7 +350,7 @@
                     <div class="col-3">
                       <select
                         class="form-select form-select-sm"
-                        [(ngModel)]="block.wallGaps.right.unit"
+                        [(ngModel)]="subwarehouse.wallGaps.right.unit"
                       >
                         <option value="cm">cm</option>
                         <option value="m">m</option>
@@ -371,7 +371,7 @@
                       </h6>
                       <div>
                         <span class="badge bg-success me-2">
-                          {{ getTotalPalletsWeight(block) | number : "1.0-0" }}
+                          {{ getTotalPalletsWeight(subwarehouse) | number : "1.0-0" }}
                           kg
                         </span>
                         <button
@@ -384,15 +384,15 @@
                     </div>
 
                     <!-- Pallet List -->
-                    <div class="pallets-list" *ngIf="block.pallets.length > 0">
+                    <div class="pallets-list" *ngIf="subwarehouse.pallets.length > 0">
                       <app-pallet-config
-                        *ngFor="let pallet of block.pallets; let pIndex = index; trackBy: trackByPalletIndex"
+                        *ngFor="let pallet of subwarehouse.pallets; let pIndex = index; trackBy: trackByPalletIndex"
                         [pallet]="pallet"
                         [palletIndex]="pIndex"
-                        [blockIndex]="i"
-                        [maxFloors]="block.rackConfig.num_floors"
-                        [maxRows]="block.rackConfig.num_rows"
-                        [maxRacks]="block.rackConfig.num_racks"
+                        [subwarehouseIndex]="i"
+                        [maxFloors]="subwarehouse.rackConfig.num_floors"
+                        [maxRows]="subwarehouse.rackConfig.num_rows"
+                        [maxRacks]="subwarehouse.rackConfig.num_racks"
                         (palletChange)="onPalletChange(i, pIndex, $event)"
                         (removePallet)="removePallet(i, pIndex)"
                       >
@@ -401,7 +401,7 @@
 
                     <!-- Empty State -->
                     <div
-                      *ngIf="block.pallets.length === 0"
+                      *ngIf="subwarehouse.pallets.length === 0"
                       class="empty-state text-center py-4"
                     >
                       <i class="fas fa-pallet fa-3x text-muted mb-3"></i>
@@ -467,8 +467,8 @@
             <strong>Status:</strong>
             <span [class]="statusClass">{{ statusMessage }}</span>
             <br />
-            <strong>Blocks:</strong>
-            {{ warehouseConfig.num_blocks }}
+            <strong>Subwarehouses:</strong>
+            {{ warehouseConfig.num_subwarehouses }}
             <br />
             <strong>Total Pallets:</strong> {{ getTotalPallets() }}
           </div>

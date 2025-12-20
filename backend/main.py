@@ -48,18 +48,18 @@
 #     gap_right: float
 #     wall_gap_unit: str = "cm"
 
-# class BlockConfig(BaseModel):
-#     block_index: int
+# class SubwarehouseConfig(BaseModel):
+#     subwarehouse_index: int
 #     rack_config: RackConfig
 #     pallet_configs: List[PalletConfig]
 
 # class WarehouseConfig(BaseModel):
 #     id: str
 #     warehouse_dimensions: Dimensions
-#     num_blocks: int
-#     block_gap: float
-#     block_gap_unit: str = "cm"
-#     block_configs: List[BlockConfig]
+#     num_subwarehouses: int
+#     subwarehouse_gap: float
+#     subwarehouse_gap_unit: str = "cm"
+#     subwarehouse_configs: List[SubwarehouseConfig]
 
 # @app.post("/api/warehouse/create")
 # async def create_warehouse(config: WarehouseConfig):
@@ -153,18 +153,18 @@ class RackConfig(BaseModel):
     gap_right: float
     wall_gap_unit: str = "cm"
 
-class BlockConfig(BaseModel):
-    block_index: int
+class SubwarehouseConfig(BaseModel):
+    subwarehouse_index: int
     rack_config: RackConfig
     pallet_configs: List[PalletConfig]
 
 class WarehouseConfig(BaseModel):
     id: str
     warehouse_dimensions: Dimensions
-    num_blocks: int
-    block_gap: float
-    block_gap_unit: str = "cm"
-    block_configs: List[BlockConfig]
+    num_subwarehouses: int
+    subwarehouse_gap: float
+    subwarehouse_gap_unit: str = "cm"
+    subwarehouse_configs: List[SubwarehouseConfig]
 
 @app.post("/api/warehouse/create")
 async def create_warehouse(config: WarehouseConfig):

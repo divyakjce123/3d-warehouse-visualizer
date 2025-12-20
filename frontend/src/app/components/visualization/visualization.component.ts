@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import {
   LayoutData,
-  BlockData,
+  SubwarehouseData,
   RackData,
   PalletData,
   WarehouseConfig,
@@ -446,10 +446,10 @@ export class VisualizationComponent
     // 1. Draw Warehouse Floor Outline
     this.drawFloorBoundary(mainGroup);
 
-    // 2. Draw Blocks and Racks
-    if (this.layoutData.blocks) {
-      this.layoutData.blocks.forEach((block) => {
-        this.drawBlock(mainGroup, block);
+    // 2. Draw Subwarehouses and Racks
+    if (this.layoutData.subwarehouses) {
+      this.layoutData.subwarehouses.forEach((subwarehouse) => {
+        this.drawSubwarehouse(mainGroup, subwarehouse);
       });
     }
 
@@ -495,13 +495,13 @@ export class VisualizationComponent
     });
   }
 
-  private drawBlock(group: THREE.Group, block: BlockData) {
+  private drawSubwarehouse(group: THREE.Group, subwarehouse: SubwarehouseData) {
     // In Z-up coordinate system:
     // X = Width direction, Y = Length/Depth direction, Z = Height direction
     // Rack positions are already absolute (calculated by backend)
     
-    const blockGroup = new THREE.Group();
-    blockGroup.name = `block-${block.id}`;
+    const subwarehouseGroup = new THREE.Group();
+    subwarehouseGroup.name = `subwarehouse-${subwarehouse.id}`;
     
     // Track unique floors, rows, and columns for labeling
     const uniqueFloors = new Set<number>();
@@ -510,57 +510,57 @@ export class VisualizationComponent
     const racksByPosition: Map<string, RackData> = new Map();
     
     // Collect info about all racks
-    block.racks.forEach((rack) => {
+    subwarehouse.racks.forEach((rack) => {
       uniqueFloors.add(rack.indices.floor);
       uniqueRows.add(rack.indices.row);
       uniqueCols.add(rack.indices.col);
       racksByPosition.set(`${rack.indices.floor}-${rack.indices.row}-${rack.indices.col}`, rack);
     });
     
-    // Draw each rack in the block
-    block.racks.forEach((rack) => {
-      this.drawRack(blockGroup, rack);
+    // Draw each rack in the subwarehouse
+    subwarehouse.racks.forEach((rack) => {
+      this.drawRack(subwarehouseGroup, rack);
     });
     
-    // Add Block Label at the front-center-top
-    if (block.racks.length > 0) {
-      const blockIndex = (block as any).block_index !== undefined ? (block as any).block_index + 1 : 
-                         parseInt(block.id.replace('block_', '')) || 1;
+    // Add Subwarehouse Label at the front-center-top
+    if (subwarehouse.racks.length > 0) {
+      const subwarehouseIndex = (subwarehouse as any).subwarehouse_index !== undefined ? (subwarehouse as any).subwarehouse_index + 1 : 
+                         parseInt(subwarehouse.id.replace('subwarehouse_', '')) || 1;
       
-      // Calculate block bounds
-      const blockBounds = this.calculateBlockBounds(block.racks);
+      // Calculate subwarehouse bounds
+      const subwarehouseBounds = this.calculateSubwarehouseBounds(subwarehouse.racks);
       
-      // Block label position - front center, above the block
-      const blockLabelPos = new THREE.Vector3(
-        blockBounds.centerX,
-        blockBounds.minY - 80,
-        blockBounds.maxZ + 100
+      // Subwarehouse label position - front center, above the subwarehouse
+      const subwarehouseLabelPos = new THREE.Vector3(
+        subwarehouseBounds.centerX,
+        subwarehouseBounds.minY - 80,
+        subwarehouseBounds.maxZ + 100
       );
       
-      const blockLabel = this.createTextSprite(`Block ${blockIndex}`, {
+      const subwarehouseLabel = this.createTextSprite(`Subwarehouse ${subwarehouseIndex}`, {
         backgroundColor: '#2196f3',
         borderColor: '#1565c0',
         color: '#ffffff',
         fontSize: 28
       });
-      blockLabel.position.copy(blockLabelPos);
-      blockLabel.scale.set(180, 45, 1);
-      blockGroup.add(blockLabel);
+      subwarehouseLabel.position.copy(subwarehouseLabelPos);
+      subwarehouseLabel.scale.set(180, 45, 1);
+      subwarehouseGroup.add(subwarehouseLabel);
       
       // Add Floor Labels (on the left side)
-      this.addFloorLabels(blockGroup, block.racks, blockBounds, uniqueFloors);
+      this.addFloorLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueFloors);
       
       // Add Row Labels (at the front)
-      this.addRowLabels(blockGroup, block.racks, blockBounds, uniqueRows);
+      this.addRowLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueRows);
       
       // Add Rack/Column Labels (at the top)
-      this.addRackLabels(blockGroup, block.racks, blockBounds, uniqueCols);
+      this.addRackLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueCols);
     }
     
-    group.add(blockGroup);
+    group.add(subwarehouseGroup);
   }
 
-  private calculateBlockBounds(racks: RackData[]): {
+  private calculateSubwarehouseBounds(racks: RackData[]): {
     minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number;
     centerX: number; centerY: number; centerZ: number;
   } {
@@ -887,17 +887,17 @@ export class VisualizationComponent
     // 3. Draw Axis Labels
     this.draw2DAxisLabels(offsetX, offsetY, drawWidth, drawHeight, whWidth, whLength);
 
-    // 4. Draw Blocks & Racks with Labels
-    if (this.layoutData.blocks) {
-      this.layoutData.blocks.forEach((block, blockIdx) => {
-        // Track unique rows and columns for this block
+    // 4. Draw Subwarehouses & Racks with Labels
+    if (this.layoutData.subwarehouses) {
+      this.layoutData.subwarehouses.forEach((subwarehouse, subwarehouseIdx) => {
+        // Track unique rows and columns for this subwarehouse
         const rowPositions: Map<number, number> = new Map();
         const colPositions: Map<number, number> = new Map();
-        let blockMinX = Infinity, blockMaxX = -Infinity;
-        let blockMinY = Infinity, blockMaxY = -Infinity;
+        let subwarehouseMinX = Infinity, subwarehouseMaxX = -Infinity;
+        let subwarehouseMinY = Infinity, subwarehouseMaxY = -Infinity;
         
         // First pass: collect positions and draw racks
-        block.racks.forEach(rack => {
+        subwarehouse.racks.forEach(rack => {
           // Only consider floor 1 racks for 2D top-down view labels
           if (rack.indices.floor === 1) {
             const rX = offsetX + rack.position.x * scale;
@@ -913,11 +913,11 @@ export class VisualizationComponent
               colPositions.set(rack.indices.col, rX + rW / 2);
             }
             
-            // Track block bounds
-            blockMinX = Math.min(blockMinX, rX);
-            blockMaxX = Math.max(blockMaxX, rX + rW);
-            blockMinY = Math.min(blockMinY, rY);
-            blockMaxY = Math.max(blockMaxY, rY + rL);
+            // Track subwarehouse bounds
+            subwarehouseMinX = Math.min(subwarehouseMinX, rX);
+            subwarehouseMaxX = Math.max(subwarehouseMaxX, rX + rW);
+            subwarehouseMinY = Math.min(subwarehouseMinY, rY);
+            subwarehouseMaxY = Math.max(subwarehouseMaxY, rY + rL);
 
             // Fill with semi-transparent blue
             this.ctx.fillStyle = "#4a90d9";
@@ -958,15 +958,15 @@ export class VisualizationComponent
           }
         });
 
-        // Draw Block Label (top)
-        if (blockMinX !== Infinity) {
-          const blockCenterX = (blockMinX + blockMaxX) / 2;
+        // Draw Subwarehouse Label (top)
+        if (subwarehouseMinX !== Infinity) {
+          const subwarehouseCenterX = (subwarehouseMinX + subwarehouseMaxX) / 2;
           
-          // Block label
+          // Subwarehouse label
           this.draw2DLabel(
-            `Block ${blockIdx + 1}`,
-            blockCenterX,
-            blockMinY - 25,
+            `Subwarehouse ${subwarehouseIdx + 1}`,
+            subwarehouseCenterX,
+            subwarehouseMinY - 25,
             { backgroundColor: '#2196f3', color: '#ffffff', fontSize: 12, padding: 6 }
           );
           
@@ -974,7 +974,7 @@ export class VisualizationComponent
           Array.from(rowPositions.entries()).sort((a, b) => a[0] - b[0]).forEach(([row, yPos]) => {
             this.draw2DLabel(
               `Row ${row}`,
-              blockMinX - 35,
+              subwarehouseMinX - 35,
               yPos,
               { backgroundColor: '#ff9800', color: '#ffffff', fontSize: 10, padding: 4 }
             );
@@ -985,7 +985,7 @@ export class VisualizationComponent
             this.draw2DLabel(
               `Rack ${col}`,
               xPos,
-              blockMinY - 8,
+              subwarehouseMinY - 8,
               { backgroundColor: '#9c27b0', color: '#ffffff', fontSize: 9, padding: 3 }
             );
           });

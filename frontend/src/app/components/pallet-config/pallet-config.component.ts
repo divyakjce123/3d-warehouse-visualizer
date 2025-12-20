@@ -9,7 +9,7 @@ import { PalletConfig } from 'src/app/models/warehouse.models';
 export class PalletConfigComponent implements OnInit {
   @Input() pallet!: PalletConfig;
   @Input() palletIndex: number = 0;
-  @Input() blockIndex: number = 0;
+  @Input() subwarehouseIndex: number = 0;
   @Input() maxFloors: number = 3;
   @Input() maxRows: number = 2;
   @Input() maxRacks: number = 4;

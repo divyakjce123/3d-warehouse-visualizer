@@ -40,32 +40,32 @@ class WarehouseCalculator:
         if W <= 0 or L <= 0 or H <= 0:
             raise ValueError("Warehouse dimensions must be greater than zero.")
         
-        n_blocks = config['num_blocks']
-        bg = self.to_cm(config['block_gap'], config['block_gap_unit'])
-        if n_blocks <= 0:
-            raise ValueError("Number of blocks must be at least 1.")
+        n_subwarehouses = config['num_subwarehouses']
+        bg = self.to_cm(config['subwarehouse_gap'], config['subwarehouse_gap_unit'])
+        if n_subwarehouses <= 0:
+            raise ValueError("Number of subwarehouses must be at least 1.")
         if bg < 0:
-            raise ValueError("Block gap cannot be negative.")
+            raise ValueError("Subwarehouse gap cannot be negative.")
         
-        # Calculate block width - blocks are distributed along X axis
-        total_gaps = bg * (n_blocks - 1) if n_blocks > 1 else 0
+        # Calculate subwarehouse width - subwarehouses are distributed along X axis
+        total_gaps = bg * (n_subwarehouses - 1) if n_subwarehouses > 1 else 0
         if total_gaps >= W:
             raise ValueError(
-                "Total block gaps are greater than or equal to warehouse width. "
-                "Reduce block gap or number of blocks, or increase warehouse width."
+                "Total subwarehouse gaps are greater than or equal to warehouse width. "
+                "Reduce subwarehouse gap or number of subwarehouses, or increase warehouse width."
             )
-        block_w = (W - total_gaps) / n_blocks if n_blocks > 0 else 0
-        if block_w <= 0:
+        subwarehouse_w = (W - total_gaps) / n_subwarehouses if n_subwarehouses > 0 else 0
+        if subwarehouse_w <= 0:
             raise ValueError(
-                "Computed block width is not positive. "
-                "Check warehouse width, block gap and number of blocks."
+                "Computed subwarehouse width is not positive. "
+                "Check warehouse width, subwarehouse gap and number of subwarehouses."
             )
         
-        blocks_data = []
+        subwarehouses_data = []
         
-        for i, b_conf in enumerate(config['block_configs']):
-            # Block starting X position (positive coordinates)
-            block_start_x = i * (block_w + bg)
+        for i, b_conf in enumerate(config['subwarehouse_configs']):
+            # Subwarehouse starting X position (positive coordinates)
+            subwarehouse_start_x = i * (subwarehouse_w + bg)
             
             rc = b_conf['rack_config']
             gf = self.to_cm(rc['gap_front'], rc['wall_gap_unit'])
@@ -73,18 +73,18 @@ class WarehouseCalculator:
             gl = self.to_cm(rc['gap_left'], rc['wall_gap_unit'])
             gr = self.to_cm(rc['gap_right'], rc['wall_gap_unit'])
             
-            # Available space within block after wall gaps
-            avail_w = block_w - gl - gr  # Available width for racks
+            # Available space within subwarehouse after wall gaps
+            avail_w = subwarehouse_w - gl - gr  # Available width for racks
             avail_l = L - gf - gb        # Available length for rows
 
             if avail_w <= 0:
                 raise ValueError(
-                    f"Block {i+1}: wall gaps (left/right) consume all width. "
+                    f"Subwarehouse {i+1}: wall gaps (left/right) consume all width. "
                     "Reduce left/right wall gaps or increase warehouse width."
                 )
             if avail_l <= 0:
                 raise ValueError(
-                    f"Block {i+1}: wall gaps (front/back) consume all length. "
+                    f"Subwarehouse {i+1}: wall gaps (front/back) consume all length. "
                     "Reduce front/back wall gaps or increase warehouse length."
                 )
             
@@ -93,11 +93,11 @@ class WarehouseCalculator:
             num_racks = rc['num_racks']
 
             if rows <= 0:
-                raise ValueError(f"Block {i+1}: number of rows must be at least 1.")
+                raise ValueError(f"Subwarehouse {i+1}: number of rows must be at least 1.")
             if floors <= 0:
-                raise ValueError(f"Block {i+1}: number of floors must be at least 1.")
+                raise ValueError(f"Subwarehouse {i+1}: number of floors must be at least 1.")
             if num_racks <= 0:
-                raise ValueError(f"Block {i+1}: number of racks must be at least 1.")
+                raise ValueError(f"Subwarehouse {i+1}: number of racks must be at least 1.")
             
             # Custom gaps between racks (columns)
             custom_gaps = [self.to_cm(g, rc['wall_gap_unit']) for g in rc.get('custom_gaps', [])]
@@ -105,8 +105,8 @@ class WarehouseCalculator:
 
             if total_custom_gaps >= avail_w:
                 raise ValueError(
-                    f"Block {i+1}: sum of rack gaps ({total_custom_gaps:.2f} cm) "
-                    f"is greater than or equal to available block width ({avail_w:.2f} cm). "
+                    f"Subwarehouse {i+1}: sum of rack gaps ({total_custom_gaps:.2f} cm) "
+                    f"is greater than or equal to available subwarehouse width ({avail_w:.2f} cm). "
                     "Reduce rack gaps, reduce number of racks, or increase warehouse width."
                 )
             
@@ -118,17 +118,17 @@ class WarehouseCalculator:
             # --- Validation for rack dimensions and height ---
             if rack_w < self.MIN_RACK_WIDTH_CM:
                 raise ValueError(
-                    f"Block {i+1}: rack width ({rack_w:.2f} cm) is too small. "
+                    f"Subwarehouse {i+1}: rack width ({rack_w:.2f} cm) is too small. "
                     "Decrease number of racks or rack gaps, or increase warehouse width."
                 )
             if rack_l < self.MIN_RACK_LENGTH_CM:
                 raise ValueError(
-                    f"Block {i+1}: rack length ({rack_l:.2f} cm) is too small. "
+                    f"Subwarehouse {i+1}: rack length ({rack_l:.2f} cm) is too small. "
                     "Decrease number of rows or increase warehouse length."
                 )
             if floor_h < self.MIN_FLOOR_HEIGHT_CM:
                 raise ValueError(
-                    f"Block {i+1}: floor/rack height ({floor_h:.2f} cm) is too small for "
+                    f"Subwarehouse {i+1}: floor/rack height ({floor_h:.2f} cm) is too small for "
                     "the given number of floors and warehouse height. "
                     "Reduce number of floors or increase warehouse height."
                 )
@@ -141,7 +141,7 @@ class WarehouseCalculator:
                 rack_y = gf + r * rack_l
                 
                 # Iterate through columns/racks (along X axis)
-                current_x = block_start_x + gl
+                current_x = subwarehouse_start_x + gl
                 
                 for c in range(num_racks):
                     # Add custom gap before this rack (except for first rack)
@@ -190,16 +190,16 @@ class WarehouseCalculator:
                     # Move X position to next rack
                     current_x += rack_w
             
-            blocks_data.append({
-                "id": f"block_{i+1}",
-                "block_index": i,
+            subwarehouses_data.append({
+                "id": f"subwarehouse_{i+1}",
+                "subwarehouse_index": i,
                 "position": {
-                    "x": block_start_x,
+                    "x": subwarehouse_start_x,
                     "y": 0,
                     "z": 0
                 },
                 "dimensions": {
-                    "width": block_w,
+                    "width": subwarehouse_w,
                     "length": L,
                     "height": H
                 },
@@ -213,5 +213,5 @@ class WarehouseCalculator:
                 "length": L,
                 "height": H
             },
-            "blocks": blocks_data
+            "subwarehouses": subwarehouses_data
         }

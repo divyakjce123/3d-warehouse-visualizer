@@ -21,11 +21,11 @@ export class WarehouseVisualizerComponent implements OnInit {
       height: 1500,
       unit: "cm",
     },
-    num_blocks: 2,
-    block_gap: 1000,
-    block_gap_unit: "cm",
-    block_configs: [],
-    blocks: false
+    num_subwarehouses: 2,
+    subwarehouse_gap: 1000,
+    subwarehouse_gap_unit: "cm",
+    subwarehouse_configs: [],
+    subwarehouses: false
   };
 
   // Separate units for each dimension field
@@ -42,7 +42,7 @@ export class WarehouseVisualizerComponent implements OnInit {
     height: 3000
   };
 
-  blocks: any[] = [];
+  subwarehouses: any[] = [];
   layoutData: LayoutData | null = null;
   is3DView: boolean = true;
   statusMessage: string = "Ready";
@@ -51,8 +51,8 @@ export class WarehouseVisualizerComponent implements OnInit {
   // Warehouse dimensions for visualization (in cm)
   warehouseDimensions: { length: number; width: number; height: number } | null = null;
 
-  // Track previous num_blocks to avoid unnecessary reinitialization
-  private previousNumBlocks: number = 5;
+  // Track previous num_subwarehouses to avoid unnecessary reinitialization
+  private previousNumSubwarehouses: number = 5;
 
   palletColors: { [key: string]: string } = {
     wooden: "#8B4513",
@@ -63,8 +63,8 @@ export class WarehouseVisualizerComponent implements OnInit {
   constructor(private warehouseService: WarehouseService) {}
 
   ngOnInit(): void {
-    this.previousNumBlocks = this.warehouseConfig.num_blocks;
-    this.initializeBlocks();
+    this.previousNumSubwarehouses = this.warehouseConfig.num_subwarehouses;
+    this.initializeSubwarehouses();
     this.syncDimensionsFromConfig();
     this.updateWarehouseDimensions();
   }
@@ -118,7 +118,7 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   // TrackBy functions for *ngFor to prevent unnecessary re-renders
-  trackByBlockIndex(index: number, block: any): number {
+  trackBySubwarehouseIndex(index: number, subwarehouse: any): number {
     return index;
   }
 
@@ -131,24 +131,24 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   // Called on blur to avoid losing focus while typing
-  onNumBlocksBlur(): void {
-    const newNumBlocks = this.warehouseConfig.num_blocks;
-    if (newNumBlocks !== this.previousNumBlocks && newNumBlocks > 0) {
-      this.adjustBlocksArray(newNumBlocks);
-      this.previousNumBlocks = newNumBlocks;
+  onNumSubwarehousesBlur(): void {
+    const newNumSubwarehouses = this.warehouseConfig.num_subwarehouses;
+    if (newNumSubwarehouses !== this.previousNumSubwarehouses && newNumSubwarehouses > 0) {
+      this.adjustSubwarehousesArray(newNumSubwarehouses);
+      this.previousNumSubwarehouses = newNumSubwarehouses;
     }
   }
 
-  initializeBlocks(): void {
-    this.blocks = [];
-    for (let i = 0; i < this.warehouseConfig.num_blocks; i++) {
-      this.blocks.push(this.createDefaultBlock());
+  initializeSubwarehouses(): void {
+    this.subwarehouses = [];
+    for (let i = 0; i < this.warehouseConfig.num_subwarehouses; i++) {
+      this.subwarehouses.push(this.createDefaultSubwarehouse());
     }
-    this.updateBlockConfigs();
+    this.updateSubwarehouseConfigs();
     this.updateWarehouseDimensions();
   }
 
-  private createDefaultBlock(): any {
+  private createDefaultSubwarehouse(): any {
     return {
       rackConfig: {
         num_floors: 4,
@@ -173,26 +173,26 @@ export class WarehouseVisualizerComponent implements OnInit {
     };
   }
 
-  private adjustBlocksArray(newNumBlocks: number): void {
-    const currentLength = this.blocks.length;
+  private adjustSubwarehousesArray(newNumSubwarehouses: number): void {
+    const currentLength = this.subwarehouses.length;
     
-    if (newNumBlocks > currentLength) {
-      // Add new blocks
-      for (let i = currentLength; i < newNumBlocks; i++) {
-        this.blocks.push(this.createDefaultBlock());
+    if (newNumSubwarehouses > currentLength) {
+      // Add new subwarehouses
+      for (let i = currentLength; i < newNumSubwarehouses; i++) {
+        this.subwarehouses.push(this.createDefaultSubwarehouse());
       }
-    } else if (newNumBlocks < currentLength) {
-      // Remove excess blocks
-      this.blocks.splice(newNumBlocks);
+    } else if (newNumSubwarehouses < currentLength) {
+      // Remove excess subwarehouses
+      this.subwarehouses.splice(newNumSubwarehouses);
     }
     
-    this.updateBlockConfigs();
+    this.updateSubwarehouseConfigs();
   }
 
-  updateBlockConfigs(): void {
-    this.warehouseConfig.block_configs = this.blocks.map((block, index) => {
-      const rackConfig = block.rackConfig;
-      const wallGaps = block.wallGaps || {
+  updateSubwarehouseConfigs(): void {
+    this.warehouseConfig.subwarehouse_configs = this.subwarehouses.map((subwarehouse, index) => {
+      const rackConfig = subwarehouse.rackConfig;
+      const wallGaps = subwarehouse.wallGaps || {
         front: { value: rackConfig.gap_front, unit: "cm" },
         back: { value: rackConfig.gap_back, unit: "cm" },
         left: { value: rackConfig.gap_left, unit: "cm" },
@@ -224,9 +224,9 @@ export class WarehouseVisualizerComponent implements OnInit {
       };
 
       return {
-        block_index: index,
+        subwarehouse_index: index,
         rack_config: rackConfigForBackend,
-        pallet_configs: block.pallets.map((pallet: any) => ({
+        pallet_configs: subwarehouse.pallets.map((pallet: any) => ({
           ...pallet,
           color: this.palletColors[pallet.type] || "#8B4513",
         })),
@@ -234,7 +234,7 @@ export class WarehouseVisualizerComponent implements OnInit {
     });
   }
 
-  addPallet(blockIndex: number): void {
+  addPallet(subwarehouseIndex: number): void {
     const newPallet: PalletConfig = {
       type: "wooden",
       weight: 1200,
@@ -245,43 +245,43 @@ export class WarehouseVisualizerComponent implements OnInit {
       position: { floor: 1, row: 1, col: 1 },
     };
 
-    if (!this.blocks[blockIndex].pallets) {
-      this.blocks[blockIndex].pallets = [];
+    if (!this.subwarehouses[subwarehouseIndex].pallets) {
+      this.subwarehouses[subwarehouseIndex].pallets = [];
     }
-    this.blocks[blockIndex].pallets.push(newPallet);
-    this.updateBlockConfigs();
+    this.subwarehouses[subwarehouseIndex].pallets.push(newPallet);
+    this.updateSubwarehouseConfigs();
   }
 
-  removePallet(blockIndex: number, palletIndex: number): void {
-    if (this.blocks[blockIndex]?.pallets) {
-      this.blocks[blockIndex].pallets.splice(palletIndex, 1);
-      this.updateBlockConfigs();
+  removePallet(subwarehouseIndex: number, palletIndex: number): void {
+    if (this.subwarehouses[subwarehouseIndex]?.pallets) {
+      this.subwarehouses[subwarehouseIndex].pallets.splice(palletIndex, 1);
+      this.updateSubwarehouseConfigs();
     }
   }
 
-  updateRackGaps(blockIndex: number): void {
-    const numRacks = this.blocks[blockIndex].rackConfig.num_racks;
-    const currentGaps = this.blocks[blockIndex].rackConfig.custom_gaps || [];
+  updateRackGaps(subwarehouseIndex: number): void {
+    const numRacks = this.subwarehouses[subwarehouseIndex].rackConfig.num_racks;
+    const currentGaps = this.subwarehouses[subwarehouseIndex].rackConfig.custom_gaps || [];
     const newGaps = Array(numRacks - 1).fill(500);
 
     for (let i = 0; i < Math.min(currentGaps.length, newGaps.length); i++) {
       newGaps[i] = currentGaps[i];
     }
 
-    this.blocks[blockIndex].rackConfig.custom_gaps = newGaps;
-    this.updateBlockConfigs();
+    this.subwarehouses[subwarehouseIndex].rackConfig.custom_gaps = newGaps;
+    this.updateSubwarehouseConfigs();
   }
 
   getTotalPallets(): number {
-    return this.blocks.reduce(
-      (total, block) => total + (block.pallets?.length || 0),
+    return this.subwarehouses.reduce(
+      (total, subwarehouse) => total + (subwarehouse.pallets?.length || 0),
       0
     );
   }
 
-  getTotalPalletsWeight(block: any): number {
+  getTotalPalletsWeight(subwarehouse: any): number {
     return (
-      block.pallets?.reduce(
+      subwarehouse.pallets?.reduce(
         (total: number, pallet: any) => total + (pallet.weight || 0),
         0
       ) || 0
@@ -289,19 +289,19 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   onPalletChange(
-    blockIndex: number,
+    subwarehouseIndex: number,
     palletIndex: number,
     updatedPallet: PalletConfig
   ): void {
-    if (this.blocks[blockIndex]?.pallets[palletIndex]) {
-      this.blocks[blockIndex].pallets[palletIndex] = updatedPallet;
-      this.updateBlockConfigs();
+    if (this.subwarehouses[subwarehouseIndex]?.pallets[palletIndex]) {
+      this.subwarehouses[subwarehouseIndex].pallets[palletIndex] = updatedPallet;
+      this.updateSubwarehouseConfigs();
     }
   }
 
   generateLayout(): void {
     this.setStatus("Generating layout...", "text-warning");
-    this.updateBlockConfigs();
+    this.updateSubwarehouseConfigs();
     this.updateWarehouseDimensions();
     
     this.warehouseService.createWarehouse(this.warehouseConfig).subscribe({

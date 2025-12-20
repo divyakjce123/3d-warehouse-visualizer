@@ -2,15 +2,15 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { PalletConfig, RackConfig } from 'src/app/models/warehouse.models';
 
 @Component({
-  selector: 'app-block-config',
-  templateUrl: './block-config.component.html',
-  styleUrls: ['./block-config.component.css']
+  selector: 'app-subwarehouse-config',
+  templateUrl: './subwarehouse-config.component.html',
+  styleUrls: ['./subwarehouse-config.component.css']
 })
-export class BlockConfigComponent implements OnInit, OnChanges {
-  @Input() blockIndex: number = 0;
+export class SubwarehouseConfigComponent implements OnInit, OnChanges {
+  @Input() subwarehouseIndex: number = 0;
   @Input() rackConfig!: RackConfig;
   @Input() pallets: PalletConfig[] = [];
-  @Input() blockGapUnit: string = 'cm';
+  @Input() subwarehouseGapUnit: string = 'cm';
   
   @Output() rackConfigChange = new EventEmitter<RackConfig>();
   @Output() palletsChange = new EventEmitter<PalletConfig[]>();
@@ -164,8 +164,8 @@ export class BlockConfigComponent implements OnInit, OnChanges {
     return this.pallets.reduce((total, pallet) => total + pallet.weight, 0);
   }
 
-  getBlockInfo(): string {
-    return `Block ${this.blockIndex + 1}: ${this.rackConfig.num_floors}F × ${this.rackConfig.num_rows}R × ${this.rackConfig.num_racks}C`;
+  getSubwarehouseInfo(): string {
+    return `Subwarehouse ${this.subwarehouseIndex + 1}: ${this.rackConfig.num_floors}F × ${this.rackConfig.num_rows}R × ${this.rackConfig.num_racks}C`;
   }
 
   // ADD THIS MISSING METHOD

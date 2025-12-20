@@ -133,7 +133,7 @@
 }
 
 :host {
-  display: block;
+  display: subwarehouse;
   height: 100vh;
 }
 

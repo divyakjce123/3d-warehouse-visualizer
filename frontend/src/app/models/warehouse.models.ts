@@ -34,20 +34,20 @@ export interface RackConfig {
   wall_gap_unit: string;
 }
 
-export interface BlockConfig {
-  block_index: number;
+export interface SubwarehouseConfig {
+  subwarehouse_index: number;
   rack_config: RackConfig;
   pallet_configs: PalletConfig[];
 }
 
 export interface WarehouseConfig {
-  blocks: boolean;
+  subwarehouses: boolean;
   id: string;
   warehouse_dimensions: Dimensions;
-  num_blocks: number;
-  block_gap: number;
-  block_gap_unit: string;
-  block_configs: BlockConfig[];
+  num_subwarehouses: number;
+  subwarehouse_gap: number;
+  subwarehouse_gap_unit: string;
+  subwarehouse_configs: SubwarehouseConfig[];
 }
 
 // Layout response interfaces
@@ -77,7 +77,7 @@ export interface RackData {
   pallets?: PalletData[];
 }
 
-export interface BlockData {
+export interface SubwarehouseData {
   id: string;
   position: { x: number; y: number; z: number };
   dimensions: { width: number; length: number; height: number };
@@ -90,5 +90,5 @@ export interface LayoutData {
     length: number;
     height: number;
   };
-  blocks: BlockData[];
+  subwarehouses: SubwarehouseData[];
 }
