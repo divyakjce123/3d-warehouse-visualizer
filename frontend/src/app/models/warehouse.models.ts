@@ -22,10 +22,10 @@ export interface PalletConfig {
   position: Position;
 }
 
-export interface RackConfig {
+export interface AisleConfig {
   num_floors: number;
   num_rows: number;
-  num_racks: number;
+  num_aisles: number;
   custom_gaps: number[];
   gap_front: number;
   gap_back: number;
@@ -36,7 +36,7 @@ export interface RackConfig {
 
 export interface SubwarehouseConfig {
   subwarehouse_index: number;
-  rack_config: RackConfig;
+  aisle_config: AisleConfig;
   pallet_configs: PalletConfig[];
 }
 
@@ -63,17 +63,17 @@ export interface PalletData {
   dims: PalletDims;
 }
 
-export interface RackIndices {
+export interface AisleIndices {
   floor: number;
   row: number;
   col: number;
 }
 
-export interface RackData {
+export interface AisleData {
   id: string;
   position: { x: number; y: number; z: number };
   dimensions: { length: number; width: number; height: number };
-  indices: RackIndices;
+  indices: AisleIndices;
   pallets?: PalletData[];
 }
 
@@ -81,7 +81,7 @@ export interface SubwarehouseData {
   id: string;
   position: { x: number; y: number; z: number };
   dimensions: { width: number; length: number; height: number };
-  racks: RackData[];
+  aisles: AisleData[];
 }
 
 export interface LayoutData {

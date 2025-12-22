@@ -37,10 +37,10 @@
 #     color: str = "#8B4513"
 #     position: Position
 
-# class RackConfig(BaseModel):
+# class AisleConfig(BaseModel):
 #     num_floors: int
 #     num_rows: int
-#     num_racks: int
+#     num_aisles: int
 #     custom_gaps: List[float] = []
 #     gap_front: float
 #     gap_back: float
@@ -50,7 +50,7 @@
 
 # class SubwarehouseConfig(BaseModel):
 #     subwarehouse_index: int
-#     rack_config: RackConfig
+#     aisle_config: AisleConfig
 #     pallet_configs: List[PalletConfig]
 
 # class WarehouseConfig(BaseModel):
@@ -142,10 +142,10 @@ class PalletConfig(BaseModel):
     color: str = "#8B4513"
     position: Position
 
-class RackConfig(BaseModel):
+class AisleConfig(BaseModel):
     num_floors: int
     num_rows: int
-    num_racks: int
+    num_aisles: int
     custom_gaps: List[float] = []
     gap_front: float
     gap_back: float
@@ -155,7 +155,7 @@ class RackConfig(BaseModel):
 
 class SubwarehouseConfig(BaseModel):
     subwarehouse_index: int
-    rack_config: RackConfig
+    aisle_config: AisleConfig
     pallet_configs: List[PalletConfig]
 
 class WarehouseConfig(BaseModel):

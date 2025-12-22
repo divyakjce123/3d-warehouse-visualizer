@@ -155,7 +155,7 @@
           <div class="accordion" id="subwarehousesAccordion">
             <div
               class="accordion-item"
-              *ngFor="let subwarehouse of subwarehouses; let i = index; trackBy: trackBySubwarehouseIndex"
+              *ngFor="let subwarehouse of subwarehouses; let i = index; taisleBy: taisleBySubwarehouseIndex"
             >
               <h2 class="accordion-header">
                 <button
@@ -172,8 +172,8 @@
                 class="accordion-collapse collapse show"
               >
                 <div class="accordion-body">
-                  <!-- Racks Configuration -->
-                  <h6 class="text-primary small mb-2">Racks Configuration</h6>
+                  <!-- Aisles Configuration -->
+                  <h6 class="text-primary small mb-2">Aisles Configuration</h6>
 
                   <div class="row g-2 mb-2 align-items-center">
                     <div class="col-7">
@@ -183,7 +183,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="subwarehouse.rackConfig.num_floors"
+                        [(ngModel)]="subwarehouse.aisleConfig.num_floors"
                         min="1"
                         max="20"
                         step="1"
@@ -199,7 +199,7 @@
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="subwarehouse.rackConfig.num_rows"
+                        [(ngModel)]="subwarehouse.aisleConfig.num_rows"
                         min="1"
                         max="50"
                         step="1"
@@ -209,26 +209,26 @@
 
                   <div class="row g-2 mb-2 align-items-center">
                     <div class="col-7">
-                      <label class="form-label small mb-0">Number of Racks</label>
+                      <label class="form-label small mb-0">Number of Aisles</label>
                     </div>
                     <div class="col-5">
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="subwarehouse.rackConfig.num_racks"
+                        [(ngModel)]="subwarehouse.aisleConfig.num_aisles"
                         min="1"
                         max="20"
                         step="1"
-                        (blur)="updateRackGaps(i)"
+                        (blur)="updateAisleGaps(i)"
                       />
                     </div>
                   </div>
 
-                  <!-- Rack Gaps - Only show if more than 1 rack -->
-                  <div *ngIf="subwarehouse.rackConfig.custom_gaps.length > 0">
-                    <h6 class="text-primary small mt-3 mb-2">Rack Gaps</h6>
+                  <!-- Aisle Gaps - Only show if more than 1 aisle -->
+                  <div *ngIf="subwarehouse.aisleConfig.custom_gaps.length > 0">
+                    <h6 class="text-primary small mt-3 mb-2">Aisle Gaps</h6>
                     <div
-                      *ngFor="let gap of subwarehouse.rackConfig.custom_gaps; let j = index; trackBy: trackByGapIndex"
+                      *ngFor="let gap of subwarehouse.aisleConfig.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
                       class="row g-2 mb-2 align-items-center"
                     >
                       <div class="col-5">
@@ -238,14 +238,14 @@
                         <input
                           type="number"
                           class="form-control form-control-sm"
-                          [(ngModel)]="subwarehouse.rackConfig.custom_gaps[j]"
+                          [(ngModel)]="subwarehouse.aisleConfig.custom_gaps[j]"
                           min="0"
                           step="any"
                         />
                       </div>
                       <div class="col-3">
                         <span class="form-control-plaintext form-control-sm text-muted">
-                          {{ subwarehouse.rackConfig.wall_gap_unit }}
+                          {{ subwarehouse.aisleConfig.wall_gap_unit }}
                         </span>
                       </div>
                     </div>
@@ -386,13 +386,13 @@
                     <!-- Pallet List -->
                     <div class="pallets-list" *ngIf="subwarehouse.pallets.length > 0">
                       <app-pallet-config
-                        *ngFor="let pallet of subwarehouse.pallets; let pIndex = index; trackBy: trackByPalletIndex"
+                        *ngFor="let pallet of subwarehouse.pallets; let pIndex = index; taisleBy: taisleByPalletIndex"
                         [pallet]="pallet"
                         [palletIndex]="pIndex"
                         [subwarehouseIndex]="i"
-                        [maxFloors]="subwarehouse.rackConfig.num_floors"
-                        [maxRows]="subwarehouse.rackConfig.num_rows"
-                        [maxRacks]="subwarehouse.rackConfig.num_racks"
+                        [maxFloors]="subwarehouse.aisleConfig.num_floors"
+                        [maxRows]="subwarehouse.aisleConfig.num_rows"
+                        [maxAisles]="subwarehouse.aisleConfig.num_aisles"
                         (palletChange)="onPalletChange(i, pIndex, $event)"
                         (removePallet)="removePallet(i, pIndex)"
                       >

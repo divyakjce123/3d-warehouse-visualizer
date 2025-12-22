@@ -160,7 +160,7 @@
       <!-- Position Section -->
       <div class="position-section">
         <h6 class="section-title small text-primary mb-2">
-          <i class="fas fa-map-marker-alt me-1"></i>Position in Rack
+          <i class="fas fa-map-marker-alt me-1"></i>Position in Aisle
         </h6>
         
         <div class="row g-2">
@@ -188,14 +188,14 @@
             </select>
           </div>
           
-          <!-- Rack -->
+          <!-- Aisle -->
           <div class="col-4">
-            <label class="form-label small mb-1">Rack</label>
+            <label class="form-label small mb-1">Aisle</label>
             <select class="form-select form-select-sm" 
                     [(ngModel)]="pallet.position.col"
                     (ngModelChange)="onPalletChange()">
-              <option *ngFor="let rack of getRackOptions()" [ngValue]="rack">
-                {{ rack }}
+              <option *ngFor="let aisle of getAisleOptions()" [ngValue]="aisle">
+                {{ aisle }}
               </option>
             </select>
           </div>

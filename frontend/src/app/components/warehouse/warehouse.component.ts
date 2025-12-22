@@ -4,7 +4,7 @@ import {
   WarehouseConfig,
   LayoutData,
   PalletConfig,
-  RackConfig,
+  AisleConfig,
 } from "../../models/warehouse.models";
 
 @Component({
@@ -51,7 +51,7 @@ export class WarehouseVisualizerComponent implements OnInit {
   // Warehouse dimensions for visualization (in cm)
   warehouseDimensions: { length: number; width: number; height: number } | null = null;
 
-  // Track previous num_subwarehouses to avoid unnecessary reinitialization
+  // Taisle previous num_subwarehouses to avoid unnecessary reinitialization
   private previousNumSubwarehouses: number = 5;
 
   palletColors: { [key: string]: string } = {
@@ -117,16 +117,16 @@ export class WarehouseVisualizerComponent implements OnInit {
     return factors[unit?.toLowerCase()] || 1;
   }
 
-  // TrackBy functions for *ngFor to prevent unnecessary re-renders
-  trackBySubwarehouseIndex(index: number, subwarehouse: any): number {
+  // TaisleBy functions for *ngFor to prevent unnecessary re-renders
+  taisleBySubwarehouseIndex(index: number, subwarehouse: any): number {
     return index;
   }
 
-  trackByGapIndex(index: number, gap: number): number {
+  taisleByGapIndex(index: number, gap: number): number {
     return index;
   }
 
-  trackByPalletIndex(index: number, pallet: any): number {
+  taisleByPalletIndex(index: number, pallet: any): number {
     return index;
   }
 
@@ -150,10 +150,10 @@ export class WarehouseVisualizerComponent implements OnInit {
 
   private createDefaultSubwarehouse(): any {
     return {
-      rackConfig: {
+      aisleConfig: {
         num_floors: 4,
         num_rows: 8,
-        num_racks: 4,
+        num_aisles: 4,
         custom_gaps: [],
         gap_front: 100,
         gap_back: 100,
@@ -191,12 +191,12 @@ export class WarehouseVisualizerComponent implements OnInit {
 
   updateSubwarehouseConfigs(): void {
     this.warehouseConfig.subwarehouse_configs = this.subwarehouses.map((subwarehouse, index) => {
-      const rackConfig = subwarehouse.rackConfig;
+      const aisleConfig = subwarehouse.aisleConfig;
       const wallGaps = subwarehouse.wallGaps || {
-        front: { value: rackConfig.gap_front, unit: "cm" },
-        back: { value: rackConfig.gap_back, unit: "cm" },
-        left: { value: rackConfig.gap_left, unit: "cm" },
-        right: { value: rackConfig.gap_right, unit: "cm" },
+        front: { value: aisleConfig.gap_front, unit: "cm" },
+        back: { value: aisleConfig.gap_back, unit: "cm" },
+        left: { value: aisleConfig.gap_left, unit: "cm" },
+        right: { value: aisleConfig.gap_right, unit: "cm" },
       };
 
       // Convert each wall gap to cm for backend
@@ -213,8 +213,8 @@ export class WarehouseVisualizerComponent implements OnInit {
         (wallGaps.right?.value || 0) *
         this.getUnitConversionFactor(wallGaps.right?.unit || "cm");
 
-      const rackConfigForBackend: RackConfig = {
-        ...rackConfig,
+      const aisleConfigForBackend: AisleConfig = {
+        ...aisleConfig,
         gap_front: gapFrontCm,
         gap_back: gapBackCm,
         gap_left: gapLeftCm,
@@ -225,7 +225,7 @@ export class WarehouseVisualizerComponent implements OnInit {
 
       return {
         subwarehouse_index: index,
-        rack_config: rackConfigForBackend,
+        aisle_config: aisleConfigForBackend,
         pallet_configs: subwarehouse.pallets.map((pallet: any) => ({
           ...pallet,
           color: this.palletColors[pallet.type] || "#8B4513",
@@ -259,16 +259,16 @@ export class WarehouseVisualizerComponent implements OnInit {
     }
   }
 
-  updateRackGaps(subwarehouseIndex: number): void {
-    const numRacks = this.subwarehouses[subwarehouseIndex].rackConfig.num_racks;
-    const currentGaps = this.subwarehouses[subwarehouseIndex].rackConfig.custom_gaps || [];
-    const newGaps = Array(numRacks - 1).fill(500);
+  updateAisleGaps(subwarehouseIndex: number): void {
+    const numAisles = this.subwarehouses[subwarehouseIndex].aisleConfig.num_aisles;
+    const currentGaps = this.subwarehouses[subwarehouseIndex].aisleConfig.custom_gaps || [];
+    const newGaps = Array(numAisles - 1).fill(500);
 
     for (let i = 0; i < Math.min(currentGaps.length, newGaps.length); i++) {
       newGaps[i] = currentGaps[i];
     }
 
-    this.subwarehouses[subwarehouseIndex].rackConfig.custom_gaps = newGaps;
+    this.subwarehouses[subwarehouseIndex].aisleConfig.custom_gaps = newGaps;
     this.updateSubwarehouseConfigs();
   }
 

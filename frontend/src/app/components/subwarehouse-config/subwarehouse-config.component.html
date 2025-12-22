@@ -8,10 +8,10 @@
     </div>
     
     <div class="card-body">
-      <!-- Racks Configuration Section -->
-      <div class="racks-config-section mb-4">
+      <!-- Aisles Configuration Section -->
+      <div class="aisles-config-section mb-4">
         <h6 class="section-title text-primary mb-3">
-          <i class="fas fa-warehouse me-2"></i>Racks Configuration
+          <i class="fas fa-warehouse me-2"></i>Aisles Configuration
         </h6>
         
         <div class="row g-3">
@@ -21,8 +21,8 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.num_floors"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.num_floors"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="1" 
                      max="20">
               <span class="input-group-text">F</span>
@@ -36,8 +36,8 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.num_rows"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.num_rows"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="1" 
                      max="50">
               <span class="input-group-text">R</span>
@@ -45,14 +45,14 @@
             <div class="form-text">Rows per floor</div>
           </div>
           
-          <!-- Number of Racks -->
+          <!-- Number of Aisles -->
           <div class="col-md-4">
-            <label class="form-label small fw-bold">Number of Racks</label>
+            <label class="form-label small fw-bold">Number of Aisles</label>
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.num_racks"
-                     (ngModelChange)="updateRackCount()"
+                     [(ngModel)]="aisleConfig.num_aisles"
+                     (ngModelChange)="updateAisleCount()"
                      min="1" 
                      max="100">
               <span class="input-group-text">C</span>
@@ -62,30 +62,30 @@
         </div>
       </div>
       
-      <!-- Rack Gaps Section -->
-      <div class="rack-gaps-section mb-4" *ngIf="rackGaps.length > 0">
+      <!-- Aisle Gaps Section -->
+      <div class="aisle-gaps-section mb-4" *ngIf="aisleGaps.length > 0">
         <h6 class="section-title text-primary mb-3">
-          <i class="fas fa-exchange-alt me-2"></i>Rack Gaps
+          <i class="fas fa-exchange-alt me-2"></i>Aisle Gaps
         </h6>
         
-        <div class="rack-gaps-list">
-          <div *ngFor="let gap of rackGaps; let i = index" class="rack-gap-item mb-2">
+        <div class="aisle-gaps-list">
+          <div *ngFor="let gap of aisleGaps; let i = index" class="aisle-gap-item mb-2">
             <div class="row g-2 align-items-center">
               <div class="col-5">
-                <label class="form-label small">{{ getRackGapLabel(i) }}</label>
+                <label class="form-label small">{{ getAisleGapLabel(i) }}</label>
               </div>
               <div class="col-4">
                 <input type="number" 
                        class="form-control form-control-sm" 
                        [(ngModel)]="gap.value"
-                       (ngModelChange)="onRackConfigChange()"
+                       (ngModelChange)="onAisleConfigChange()"
                        min="0" 
                        step="0.1">
               </div>
               <div class="col-3">
                 <select class="form-select form-select-sm" 
                         [(ngModel)]="gap.unit"
-                        (ngModelChange)="onRackConfigChange()">
+                        (ngModelChange)="onAisleConfigChange()">
                   <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
                 </select>
               </div>
@@ -111,14 +111,14 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.gap_front"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.gap_front"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="0" 
                      step="0.1">
               <select class="form-select" 
                       style="max-width: 80px;"
-                      [(ngModel)]="rackConfig.wall_gap_unit"
-                      (ngModelChange)="onRackConfigChange()">
+                      [(ngModel)]="aisleConfig.wall_gap_unit"
+                      (ngModelChange)="onAisleConfigChange()">
                 <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
               </select>
             </div>
@@ -130,14 +130,14 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.gap_back"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.gap_back"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="0" 
                      step="0.1">
               <select class="form-select" 
                       style="max-width: 80px;"
-                      [(ngModel)]="rackConfig.wall_gap_unit"
-                      (ngModelChange)="onRackConfigChange()">
+                      [(ngModel)]="aisleConfig.wall_gap_unit"
+                      (ngModelChange)="onAisleConfigChange()">
                 <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
               </select>
             </div>
@@ -149,14 +149,14 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.gap_left"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.gap_left"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="0" 
                      step="0.1">
               <select class="form-select" 
                       style="max-width: 80px;"
-                      [(ngModel)]="rackConfig.wall_gap_unit"
-                      (ngModelChange)="onRackConfigChange()">
+                      [(ngModel)]="aisleConfig.wall_gap_unit"
+                      (ngModelChange)="onAisleConfigChange()">
                 <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
               </select>
             </div>
@@ -168,14 +168,14 @@
             <div class="input-group input-group-sm">
               <input type="number" 
                      class="form-control" 
-                     [(ngModel)]="rackConfig.gap_right"
-                     (ngModelChange)="onRackConfigChange()"
+                     [(ngModel)]="aisleConfig.gap_right"
+                     (ngModelChange)="onAisleConfigChange()"
                      min="0" 
                      step="0.1">
               <select class="form-select" 
                       style="max-width: 80px;"
-                      [(ngModel)]="rackConfig.wall_gap_unit"
-                      (ngModelChange)="onRackConfigChange()">
+                      [(ngModel)]="aisleConfig.wall_gap_unit"
+                      (ngModelChange)="onAisleConfigChange()">
                 <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
               </select>
             </div>
@@ -212,9 +212,9 @@
               [pallet]="pallet"
               [palletIndex]="i"
               [subwarehouseIndex]="subwarehouseIndex"
-              [maxFloors]="rackConfig.num_floors"
-              [maxRows]="rackConfig.num_rows"
-              [maxRacks]="rackConfig.num_racks"
+              [maxFloors]="aisleConfig.num_floors"
+              [maxRows]="aisleConfig.num_rows"
+              [maxAisles]="aisleConfig.num_aisles"
               (palletChange)="onPalletsChange()"
               (removePallet)="onRemovePallet(i)">
             </app-pallet-config>

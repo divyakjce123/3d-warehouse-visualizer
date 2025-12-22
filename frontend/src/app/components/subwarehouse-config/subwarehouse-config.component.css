@@ -9,14 +9,14 @@
   border-bottom: 2px solid #e9ecef;
 }
 
-/* Rack Gaps Section */
-.rack-gaps-list {
+/* Aisle Gaps Section */
+.aisle-gaps-list {
   max-height: 200px;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
 
-.rack-gap-item {
+.aisle-gap-item {
   padding: 0.5rem;
   background-color: #f8f9fa;
   border-radius: 0.25rem;
@@ -53,21 +53,21 @@
 }
 
 /* Custom scrollbar for lists */
-.rack-gaps-list::-webkit-scrollbar {
+.aisle-gaps-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.rack-gaps-list::-webkit-scrollbar-track {
+.aisle-gaps-list::-webkit-scrollbar-taisle {
   background: #f1f1f1;
   border-radius: 3px;
 }
 
-.rack-gaps-list::-webkit-scrollbar-thumb {
+.aisle-gaps-list::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 3px;
 }
 
-.rack-gaps-list::-webkit-scrollbar-thumb:hover {
+.aisle-gaps-list::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 

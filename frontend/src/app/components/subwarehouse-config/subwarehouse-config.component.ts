@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { PalletConfig, RackConfig } from 'src/app/models/warehouse.models';
+import { PalletConfig, AisleConfig } from 'src/app/models/warehouse.models';
 
 @Component({
   selector: 'app-subwarehouse-config',
@@ -8,15 +8,15 @@ import { PalletConfig, RackConfig } from 'src/app/models/warehouse.models';
 })
 export class SubwarehouseConfigComponent implements OnInit, OnChanges {
   @Input() subwarehouseIndex: number = 0;
-  @Input() rackConfig!: RackConfig;
+  @Input() aisleConfig!: AisleConfig;
   @Input() pallets: PalletConfig[] = [];
   @Input() subwarehouseGapUnit: string = 'cm';
   
-  @Output() rackConfigChange = new EventEmitter<RackConfig>();
+  @Output() aisleConfigChange = new EventEmitter<AisleConfig>();
   @Output() palletsChange = new EventEmitter<PalletConfig[]>();
   @Output() addPallet = new EventEmitter<void>();
   @Output() removePallet = new EventEmitter<number>();
-  @Output() updateRackGaps = new EventEmitter<void>();
+  @Output() updateAisleGaps = new EventEmitter<void>();
 
   // Available units for dropdowns
   units = ['cm', 'm', 'mm', 'ft', 'in'];
@@ -29,42 +29,42 @@ export class SubwarehouseConfigComponent implements OnInit, OnChanges {
     { value: 'metal', label: 'Metal', color: '#A9A9A9' }
   ];
 
-  // Track rack gaps
-  rackGaps: { value: number, unit: string }[] = [];
+  // Taisle aisle gaps
+  aisleGaps: { value: number, unit: string }[] = [];
 
   ngOnInit(): void {
-    this.initializeRackGaps();
+    this.initializeAisleGaps();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['rackConfig'] && changes['rackConfig'].currentValue) {
-      this.initializeRackGaps();
+    if (changes['aisleConfig'] && changes['aisleConfig'].currentValue) {
+      this.initializeAisleGaps();
     }
   }
 
-  initializeRackGaps(): void {
-    const numGaps = this.rackConfig.num_racks - 1;
-    this.rackGaps = [];
+  initializeAisleGaps(): void {
+    const numGaps = this.aisleConfig.num_aisles - 1;
+    this.aisleGaps = [];
     
     for (let i = 0; i < numGaps; i++) {
-      this.rackGaps.push({
-        value: this.rackConfig.custom_gaps[i] || 20,
-        unit: this.rackConfig.wall_gap_unit || 'cm'
+      this.aisleGaps.push({
+        value: this.aisleConfig.custom_gaps[i] || 20,
+        unit: this.aisleConfig.wall_gap_unit || 'cm'
       });
     }
   }
 
-  onRackConfigChange(): void {
-    // Update custom gaps from rackGaps array, converting each to cm
-    this.rackConfig.custom_gaps = this.rackGaps.map(gap =>
+  onAisleConfigChange(): void {
+    // Update custom gaps from aisleGaps array, converting each to cm
+    this.aisleConfig.custom_gaps = this.aisleGaps.map(gap =>
       this.convertToCm(gap.value, gap.unit)
     );
     
     // Keep wall_gap_unit ONLY for wall gaps (front/back/left/right),
-    // do NOT force all rack gaps to share the same unit anymore.
+    // do NOT force all aisle gaps to share the same unit anymore.
     
-    this.rackConfigChange.emit(this.rackConfig);
-    this.updateRackGaps.emit();
+    this.aisleConfigChange.emit(this.aisleConfig);
+    this.updateAisleGaps.emit();
   }
 
   onPalletsChange(): void {
@@ -104,49 +104,49 @@ export class SubwarehouseConfigComponent implements OnInit, OnChanges {
     this.onPalletsChange();
   }
 
-  getRackGapLabel(index: number): string {
-    return `Gap between Rack ${index + 1}-${index + 2}`;
+  getAisleGapLabel(index: number): string {
+    return `Gap between Aisle ${index + 1}-${index + 2}`;
   }
 
-  addRackGap(): void {
-    if (this.rackConfig.num_racks > 0) {
-      this.rackConfig.num_racks++;
-      this.initializeRackGaps();
-      this.onRackConfigChange();
+  addAisleGap(): void {
+    if (this.aisleConfig.num_aisles > 0) {
+      this.aisleConfig.num_aisles++;
+      this.initializeAisleGaps();
+      this.onAisleConfigChange();
     }
   }
 
-  removeRackGap(): void {
-    if (this.rackConfig.num_racks > 1) {
-      this.rackConfig.num_racks--;
-      this.initializeRackGaps();
-      this.onRackConfigChange();
+  removeAisleGap(): void {
+    if (this.aisleConfig.num_aisles > 1) {
+      this.aisleConfig.num_aisles--;
+      this.initializeAisleGaps();
+      this.onAisleConfigChange();
     }
   }
 
-  updateRackCount(): void {
-    // Update rack gaps based on new rack count
-    const oldCount = this.rackGaps.length + 1;
-    const newCount = this.rackConfig.num_racks;
+  updateAisleCount(): void {
+    // Update aisle gaps based on new aisle count
+    const oldCount = this.aisleGaps.length + 1;
+    const newCount = this.aisleConfig.num_aisles;
     
     if (newCount > oldCount) {
       // Add new gaps
       for (let i = oldCount; i < newCount; i++) {
-        this.rackGaps.push({
+        this.aisleGaps.push({
           value: 20,
-          unit: this.rackConfig.wall_gap_unit || 'cm'
+          unit: this.aisleConfig.wall_gap_unit || 'cm'
         });
       }
     } else if (newCount < oldCount) {
       // Remove extra gaps
-      this.rackGaps = this.rackGaps.slice(0, newCount - 1);
+      this.aisleGaps = this.aisleGaps.slice(0, newCount - 1);
     }
     
     // Store gaps in cm for backend
-    this.rackConfig.custom_gaps = this.rackGaps.map(gap =>
+    this.aisleConfig.custom_gaps = this.aisleGaps.map(gap =>
       this.convertToCm(gap.value, gap.unit)
     );
-    this.onRackConfigChange();
+    this.onAisleConfigChange();
   }
 
   convertToCm(value: number, unit: string): number {
@@ -165,17 +165,17 @@ export class SubwarehouseConfigComponent implements OnInit, OnChanges {
   }
 
   getSubwarehouseInfo(): string {
-    return `Subwarehouse ${this.subwarehouseIndex + 1}: ${this.rackConfig.num_floors}F × ${this.rackConfig.num_rows}R × ${this.rackConfig.num_racks}C`;
+    return `Subwarehouse ${this.subwarehouseIndex + 1}: ${this.aisleConfig.num_floors}F × ${this.aisleConfig.num_rows}R × ${this.aisleConfig.num_aisles}C`;
   }
 
   // ADD THIS MISSING METHOD
   getTotalGapsWidth(): number {
-    if (!this.rackGaps || this.rackGaps.length === 0) {
+    if (!this.aisleGaps || this.aisleGaps.length === 0) {
       return 0;
     }
     
     let totalWidthCm = 0;
-    for (const gap of this.rackGaps) {
+    for (const gap of this.aisleGaps) {
       totalWidthCm += this.convertToCm(gap.value, gap.unit);
     }
     

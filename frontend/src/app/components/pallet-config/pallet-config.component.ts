@@ -12,7 +12,7 @@ export class PalletConfigComponent implements OnInit {
   @Input() subwarehouseIndex: number = 0;
   @Input() maxFloors: number = 3;
   @Input() maxRows: number = 2;
-  @Input() maxRacks: number = 4;
+  @Input() maxAisles: number = 4;
   
   @Output() palletChange = new EventEmitter<PalletConfig>();
   @Output() removePallet = new EventEmitter<void>();
@@ -131,7 +131,7 @@ export class PalletConfigComponent implements OnInit {
   }
 
   getPositionLabel(): string {
-    return `Floor ${this.pallet.position.floor}, Row ${this.pallet.position.row}, Rack ${this.pallet.position.col}`;
+    return `Floor ${this.pallet.position.floor}, Row ${this.pallet.position.row}, Aisle ${this.pallet.position.col}`;
   }
 
   // Generate floor options based on max floors
@@ -144,9 +144,9 @@ export class PalletConfigComponent implements OnInit {
     return Array.from({ length: this.maxRows }, (_, i) => i + 1);
   }
 
-  // Generate rack options based on max racks
-  getRackOptions(): number[] {
-    return Array.from({ length: this.maxRacks }, (_, i) => i + 1);
+  // Generate aisle options based on max aisles
+  getAisleOptions(): number[] {
+    return Array.from({ length: this.maxAisles }, (_, i) => i + 1);
   }
 
   onUnitChange(field: string, unit: string): void {

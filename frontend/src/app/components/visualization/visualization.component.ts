@@ -14,7 +14,7 @@ import {
 import {
   LayoutData,
   SubwarehouseData,
-  RackData,
+  AisleData,
   PalletData,
   WarehouseConfig,
 } from "../../models/warehouse.models";
@@ -85,10 +85,10 @@ export class VisualizationComponent
     axisZ: 0x0000ff, // Blue (Height)
     text: 0x333333,
 
-    // Rack Styling (Blue Transparent look)
-    rackFill: 0x4a90d9,         // Steel Blue
-    rackEdge: 0x1565c0,         // Darker Blue for edges
-    rackShelf: 0x64b5f6,        // Lighter blue for shelves
+    // Aisle Styling (Blue Transparent look)
+    aisleFill: 0x4a90d9,         // Steel Blue
+    aisleEdge: 0x1565c0,         // Darker Blue for edges
+    aisleAisle: 0x64b5f6,        // Lighter blue for aisles
     
     // Pallets
     palletWood: 0x8b4513,
@@ -446,7 +446,7 @@ export class VisualizationComponent
     // 1. Draw Warehouse Floor Outline
     this.drawFloorBoundary(mainGroup);
 
-    // 2. Draw Subwarehouses and Racks
+    // 2. Draw Subwarehouses and Aisles
     if (this.layoutData.subwarehouses) {
       this.layoutData.subwarehouses.forEach((subwarehouse) => {
         this.drawSubwarehouse(mainGroup, subwarehouse);
@@ -498,37 +498,37 @@ export class VisualizationComponent
   private drawSubwarehouse(group: THREE.Group, subwarehouse: SubwarehouseData) {
     // In Z-up coordinate system:
     // X = Width direction, Y = Length/Depth direction, Z = Height direction
-    // Rack positions are already absolute (calculated by backend)
+    // Aisle positions are already absolute (calculated by backend)
     
     const subwarehouseGroup = new THREE.Group();
     subwarehouseGroup.name = `subwarehouse-${subwarehouse.id}`;
     
-    // Track unique floors, rows, and columns for labeling
+    // Taisle unique floors, rows, and columns for labeling
     const uniqueFloors = new Set<number>();
     const uniqueRows = new Set<number>();
     const uniqueCols = new Set<number>();
-    const racksByPosition: Map<string, RackData> = new Map();
+    const aislesByPosition: Map<string, AisleData> = new Map();
     
-    // Collect info about all racks
-    subwarehouse.racks.forEach((rack) => {
-      uniqueFloors.add(rack.indices.floor);
-      uniqueRows.add(rack.indices.row);
-      uniqueCols.add(rack.indices.col);
-      racksByPosition.set(`${rack.indices.floor}-${rack.indices.row}-${rack.indices.col}`, rack);
+    // Collect info about all aisles
+    subwarehouse.aisles.forEach((aisle) => {
+      uniqueFloors.add(aisle.indices.floor);
+      uniqueRows.add(aisle.indices.row);
+      uniqueCols.add(aisle.indices.col);
+      aislesByPosition.set(`${aisle.indices.floor}-${aisle.indices.row}-${aisle.indices.col}`, aisle);
     });
     
-    // Draw each rack in the subwarehouse
-    subwarehouse.racks.forEach((rack) => {
-      this.drawRack(subwarehouseGroup, rack);
+    // Draw each aisle in the subwarehouse
+    subwarehouse.aisles.forEach((aisle) => {
+      this.drawAisle(subwarehouseGroup, aisle);
     });
     
     // Add Subwarehouse Label at the front-center-top
-    if (subwarehouse.racks.length > 0) {
+    if (subwarehouse.aisles.length > 0) {
       const subwarehouseIndex = (subwarehouse as any).subwarehouse_index !== undefined ? (subwarehouse as any).subwarehouse_index + 1 : 
                          parseInt(subwarehouse.id.replace('subwarehouse_', '')) || 1;
       
       // Calculate subwarehouse bounds
-      const subwarehouseBounds = this.calculateSubwarehouseBounds(subwarehouse.racks);
+      const subwarehouseBounds = this.calculateSubwarehouseBounds(subwarehouse.aisles);
       
       // Subwarehouse label position - front center, above the subwarehouse
       const subwarehouseLabelPos = new THREE.Vector3(
@@ -548,19 +548,19 @@ export class VisualizationComponent
       subwarehouseGroup.add(subwarehouseLabel);
       
       // Add Floor Labels (on the left side)
-      this.addFloorLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueFloors);
+      this.addFloorLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueFloors);
       
       // Add Row Labels (at the front)
-      this.addRowLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueRows);
+      this.addRowLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueRows);
       
-      // Add Rack/Column Labels (at the top)
-      this.addRackLabels(subwarehouseGroup, subwarehouse.racks, subwarehouseBounds, uniqueCols);
+      // Add Aisle/Column Labels (at the top)
+      this.addAisleLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueCols);
     }
     
     group.add(subwarehouseGroup);
   }
 
-  private calculateSubwarehouseBounds(racks: RackData[]): {
+  private calculateSubwarehouseBounds(aisles: AisleData[]): {
     minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number;
     centerX: number; centerY: number; centerZ: number;
   } {
@@ -568,9 +568,9 @@ export class VisualizationComponent
     let minY = Infinity, maxY = -Infinity;
     let minZ = Infinity, maxZ = -Infinity;
     
-    racks.forEach(rack => {
-      const { x, y, z } = rack.position;
-      const { width, length, height } = rack.dimensions;
+    aisles.forEach(aisle => {
+      const { x, y, z } = aisle.position;
+      const { width, length, height } = aisle.dimensions;
       
       minX = Math.min(minX, x);
       maxX = Math.max(maxX, x + width);
@@ -590,17 +590,17 @@ export class VisualizationComponent
 
   private addFloorLabels(
     group: THREE.Group, 
-    racks: RackData[], 
+    aisles: AisleData[], 
     bounds: any, 
     uniqueFloors: Set<number>
   ) {
-    // Get floor heights by finding racks at each floor level
+    // Get floor heights by finding aisles at each floor level
     const floorHeights: Map<number, number> = new Map();
     
-    racks.forEach(rack => {
-      const floor = rack.indices.floor;
+    aisles.forEach(aisle => {
+      const floor = aisle.indices.floor;
       if (!floorHeights.has(floor)) {
-        floorHeights.set(floor, rack.position.z + rack.dimensions.height / 2);
+        floorHeights.set(floor, aisle.position.z + aisle.dimensions.height / 2);
       }
     });
     
@@ -623,17 +623,17 @@ export class VisualizationComponent
 
   private addRowLabels(
     group: THREE.Group, 
-    racks: RackData[], 
+    aisles: AisleData[], 
     bounds: any, 
     uniqueRows: Set<number>
   ) {
     // Get row Y positions
     const rowPositions: Map<number, number> = new Map();
     
-    racks.forEach(rack => {
-      const row = rack.indices.row;
+    aisles.forEach(aisle => {
+      const row = aisle.indices.row;
       if (!rowPositions.has(row)) {
-        rowPositions.set(row, rack.position.y + rack.dimensions.length / 2);
+        rowPositions.set(row, aisle.position.y + aisle.dimensions.length / 2);
       }
     });
     
@@ -654,30 +654,30 @@ export class VisualizationComponent
     });
   }
 
-  private addRackLabels(
+  private addAisleLabels(
     group: THREE.Group, 
-    racks: RackData[], 
+    aisles: AisleData[], 
     bounds: any, 
     uniqueCols: Set<number>
   ) {
-    // Get rack/column X positions (only for ground floor to avoid clutter)
+    // Get aisle/column X positions (only for ground floor to avoid clutter)
     const colPositions: Map<number, number> = new Map();
     
-    racks.forEach(rack => {
-      if (rack.indices.floor === 1) { // Only get positions from floor 1
-        const col = rack.indices.col;
+    aisles.forEach(aisle => {
+      if (aisle.indices.floor === 1) { // Only get positions from floor 1
+        const col = aisle.indices.col;
         if (!colPositions.has(col)) {
-          colPositions.set(col, rack.position.x + rack.dimensions.width / 2);
+          colPositions.set(col, aisle.position.x + aisle.dimensions.width / 2);
         }
       }
     });
     
-    // Create labels for each rack/column
+    // Create labels for each aisle/column
     Array.from(uniqueCols).sort((a, b) => a - b).forEach(col => {
       const xPos = colPositions.get(col);
       if (xPos === undefined) return;
       
-      const label = this.createTextSprite(`Rack ${col}`, {
+      const label = this.createTextSprite(`Aisle ${col}`, {
         backgroundColor: '#9c27b0',
         borderColor: '#7b1fa2',
         color: '#ffffff',
@@ -690,17 +690,17 @@ export class VisualizationComponent
     });
   }
 
-  private drawRack(group: THREE.Group, rack: RackData) {
-    const { width, length, height } = rack.dimensions;
-    const { x, y, z } = rack.position;
+  private drawAisle(group: THREE.Group, aisle: AisleData) {
+    const { width, length, height } = aisle.dimensions;
+    const { x, y, z } = aisle.position;
 
-    // Create Rack Group
-    const rackGroup = new THREE.Group();
-    rackGroup.name = `rack-${rack.id}`;
+    // Create Aisle Group
+    const aisleGroup = new THREE.Group();
+    aisleGroup.name = `aisle-${aisle.id}`;
     
     // Position at the corner (x, y, z), then offset by half dimensions
     // because BoxGeometry is centered at origin
-    rackGroup.position.set(
+    aisleGroup.position.set(
       x + width / 2,
       y + length / 2,
       z + height / 2
@@ -709,7 +709,7 @@ export class VisualizationComponent
     // 1. Transparent Blue Body (Glass-like appearance)
     const geometry = new THREE.BoxGeometry(width, length, height);
     const material = new THREE.MeshPhysicalMaterial({
-      color: this.COLORS.rackFill,
+      color: this.COLORS.aisleFill,
       transparent: true,
       opacity: 0.25,
       metalness: 0.0,
@@ -720,43 +720,43 @@ export class VisualizationComponent
     const cube = new THREE.Mesh(geometry, material);
     cube.castShadow = true;
     cube.receiveShadow = true;
-    rackGroup.add(cube);
+    aisleGroup.add(cube);
 
     // 2. Solid Edges (Structural frame outline)
     const edges = new THREE.EdgesGeometry(geometry);
     const edgeMaterial = new THREE.LineBasicMaterial({ 
-      color: this.COLORS.rackEdge,
+      color: this.COLORS.aisleEdge,
       linewidth: 1.5 
     });
     const wireframe = new THREE.LineSegments(edges, edgeMaterial);
-    rackGroup.add(wireframe);
+    aisleGroup.add(wireframe);
 
     // 3. Draw Pallets if present
-    if (rack.pallets && rack.pallets.length > 0) {
-      rack.pallets.forEach((pallet, index) => {
-        this.drawPallet(rackGroup, pallet, width, length, height);
+    if (aisle.pallets && aisle.pallets.length > 0) {
+      aisle.pallets.forEach((pallet, index) => {
+        this.drawPallet(aisleGroup, pallet, width, length, height);
       });
     }
 
-    group.add(rackGroup);
+    group.add(aisleGroup);
   }
 
   private drawPallet(
-    rackGroup: THREE.Group, 
+    aisleGroup: THREE.Group, 
     pallet: PalletData, 
-    rackWidth: number, 
-    rackLength: number, 
-    rackHeight: number
+    aisleWidth: number, 
+    aisleLength: number, 
+    aisleHeight: number
   ) {
-    // Calculate pallet size - use actual dims or scale to fit rack
-    const pw = pallet.dims?.width || rackWidth * 0.8;
-    const pl = pallet.dims?.length || rackLength * 0.8;
-    const ph = pallet.dims?.height || rackHeight * 0.6;
+    // Calculate pallet size - use actual dims or scale to fit aisle
+    const pw = pallet.dims?.width || aisleWidth * 0.8;
+    const pl = pallet.dims?.length || aisleLength * 0.8;
+    const ph = pallet.dims?.height || aisleHeight * 0.6;
     
     const palletGeo = new THREE.BoxGeometry(
-      Math.min(pw, rackWidth * 0.9),
-      Math.min(pl, rackLength * 0.9),
-      Math.min(ph, rackHeight * 0.8)
+      Math.min(pw, aisleWidth * 0.9),
+      Math.min(pl, aisleLength * 0.9),
+      Math.min(ph, aisleHeight * 0.8)
     );
     
     const palletMat = new THREE.MeshStandardMaterial({ 
@@ -766,12 +766,12 @@ export class VisualizationComponent
     });
     
     const palletMesh = new THREE.Mesh(palletGeo, palletMat);
-    // Position pallet at bottom-center of rack
-    palletMesh.position.set(0, 0, -rackHeight/2 + ph/2 + 5);
+    // Position pallet at bottom-center of aisle
+    palletMesh.position.set(0, 0, -aisleHeight/2 + ph/2 + 5);
     palletMesh.castShadow = true;
     palletMesh.receiveShadow = true;
     
-    rackGroup.add(palletMesh);
+    aisleGroup.add(palletMesh);
   }
 
   private getPalletColor(colorName: string): number {
@@ -887,33 +887,33 @@ export class VisualizationComponent
     // 3. Draw Axis Labels
     this.draw2DAxisLabels(offsetX, offsetY, drawWidth, drawHeight, whWidth, whLength);
 
-    // 4. Draw Subwarehouses & Racks with Labels
+    // 4. Draw Subwarehouses & Aisles with Labels
     if (this.layoutData.subwarehouses) {
       this.layoutData.subwarehouses.forEach((subwarehouse, subwarehouseIdx) => {
-        // Track unique rows and columns for this subwarehouse
+        // Taisle unique rows and columns for this subwarehouse
         const rowPositions: Map<number, number> = new Map();
         const colPositions: Map<number, number> = new Map();
         let subwarehouseMinX = Infinity, subwarehouseMaxX = -Infinity;
         let subwarehouseMinY = Infinity, subwarehouseMaxY = -Infinity;
         
-        // First pass: collect positions and draw racks
-        subwarehouse.racks.forEach(rack => {
-          // Only consider floor 1 racks for 2D top-down view labels
-          if (rack.indices.floor === 1) {
-            const rX = offsetX + rack.position.x * scale;
-            const rY = offsetY + rack.position.y * scale;
-            const rW = rack.dimensions.width * scale;
-            const rL = rack.dimensions.length * scale;
+        // First pass: collect positions and draw aisles
+        subwarehouse.aisles.forEach(aisle => {
+          // Only consider floor 1 aisles for 2D top-down view labels
+          if (aisle.indices.floor === 1) {
+            const rX = offsetX + aisle.position.x * scale;
+            const rY = offsetY + aisle.position.y * scale;
+            const rW = aisle.dimensions.width * scale;
+            const rL = aisle.dimensions.length * scale;
 
-            // Track positions
-            if (!rowPositions.has(rack.indices.row)) {
-              rowPositions.set(rack.indices.row, rY + rL / 2);
+            // Taisle positions
+            if (!rowPositions.has(aisle.indices.row)) {
+              rowPositions.set(aisle.indices.row, rY + rL / 2);
             }
-            if (!colPositions.has(rack.indices.col)) {
-              colPositions.set(rack.indices.col, rX + rW / 2);
+            if (!colPositions.has(aisle.indices.col)) {
+              colPositions.set(aisle.indices.col, rX + rW / 2);
             }
             
-            // Track subwarehouse bounds
+            // Taisle subwarehouse bounds
             subwarehouseMinX = Math.min(subwarehouseMinX, rX);
             subwarehouseMaxX = Math.max(subwarehouseMaxX, rX + rW);
             subwarehouseMinY = Math.min(subwarehouseMinY, rY);
@@ -930,19 +930,19 @@ export class VisualizationComponent
             this.ctx.lineWidth = 1.5;
             this.ctx.strokeRect(rX, rY, rW, rL);
 
-            // Draw rack cell label (small)
+            // Draw aisle cell label (small)
             this.ctx.fillStyle = "#1565c0";
             this.ctx.font = "9px Arial";
             this.ctx.textAlign = "center";
             this.ctx.fillText(
-              `R${rack.indices.row}C${rack.indices.col}`,
+              `R${aisle.indices.row}C${aisle.indices.col}`,
               rX + rW / 2,
               rY + rL / 2 + 3
             );
 
             // Draw pallets if present
-            if (rack.pallets && rack.pallets.length > 0) {
-              rack.pallets.forEach(pallet => {
+            if (aisle.pallets && aisle.pallets.length > 0) {
+              aisle.pallets.forEach(pallet => {
                 const palletMargin = Math.min(rW, rL) * 0.15;
                 this.ctx.fillStyle = pallet.color || "#8B4513";
                 this.ctx.globalAlpha = 0.7;
@@ -980,10 +980,10 @@ export class VisualizationComponent
             );
           });
           
-          // Rack/Column labels (top)
+          // Aisle/Column labels (top)
           Array.from(colPositions.entries()).sort((a, b) => a[0] - b[0]).forEach(([col, xPos]) => {
             this.draw2DLabel(
-              `Rack ${col}`,
+              `Aisle ${col}`,
               xPos,
               subwarehouseMinY - 8,
               { backgroundColor: '#9c27b0', color: '#ffffff', fontSize: 9, padding: 3 }
