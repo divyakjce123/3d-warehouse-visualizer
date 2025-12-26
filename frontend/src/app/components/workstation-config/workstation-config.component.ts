@@ -2,15 +2,15 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { PalletConfig, AisleConfig } from 'src/app/models/warehouse.models';
 
 @Component({
-  selector: 'app-subwarehouse-config',
-  templateUrl: './subwarehouse-config.component.html',
-  styleUrls: ['./subwarehouse-config.component.css']
+  selector: 'app-workstation-config',
+  templateUrl: './workstation-config.component.html',
+  styleUrls: ['./workstation-config.component.css']
 })
-export class SubwarehouseConfigComponent implements OnInit, OnChanges {
-  @Input() subwarehouseIndex: number = 0;
+export class WorkstationConfigComponent implements OnInit, OnChanges {
+  @Input() workstationIndex: number = 0;
   @Input() aisleConfig!: AisleConfig;
   @Input() pallets: PalletConfig[] = [];
-  @Input() subwarehouseGapUnit: string = 'cm';
+  @Input() workstationGapUnit: string = 'cm';
   
   @Output() aisleConfigChange = new EventEmitter<AisleConfig>();
   @Output() palletsChange = new EventEmitter<PalletConfig[]>();
@@ -164,8 +164,8 @@ export class SubwarehouseConfigComponent implements OnInit, OnChanges {
     return this.pallets.reduce((total, pallet) => total + pallet.weight, 0);
   }
 
-  getSubwarehouseInfo(): string {
-    return `Subwarehouse ${this.subwarehouseIndex + 1}: ${this.aisleConfig.num_floors}F × ${this.aisleConfig.num_rows}R × ${this.aisleConfig.num_aisles}C`;
+  getWorkstationInfo(): string {
+    return `Workstation ${this.workstationIndex + 1}: ${this.aisleConfig.num_floors}F × ${this.aisleConfig.num_rows}R × ${this.aisleConfig.num_aisles}C`;
   }
 
   // ADD THIS MISSING METHOD

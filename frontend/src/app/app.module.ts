@@ -5,7 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { WarehouseVisualizerComponent } from './components/warehouse/warehouse.component';
-import { SubwarehouseConfigComponent } from './components/subwarehouse-config/subwarehouse-config.component';
+import { WorkstationConfigComponent } from './components/workstation-config/workstation-config.component';
 import { PalletConfigComponent } from './components/pallet-config/pallet-config.component';
 import { VisualizationComponent } from './components/visualization/visualization.component';
 
@@ -13,7 +13,7 @@ import { VisualizationComponent } from './components/visualization/visualization
   declarations: [
     AppComponent,
     WarehouseVisualizerComponent,
-    SubwarehouseConfigComponent,
+    WorkstationConfigComponent,
     PalletConfigComponent,
     VisualizationComponent // <-- Make sure this is included
   ],

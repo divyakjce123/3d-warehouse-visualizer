@@ -1,7 +1,7 @@
-<div class="subwarehouse-config-card">
+<div class="workstation-config-card">
   <div class="card mb-3">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h6 class="mb-0">{{ getSubwarehouseInfo() }}</h6>
+      <h6 class="mb-0">{{ getWorkstationInfo() }}</h6>
       <span class="badge bg-light text-dark">
         {{ pallets.length }} Pallets
       </span>
@@ -211,7 +211,7 @@
             <app-pallet-config
               [pallet]="pallet"
               [palletIndex]="i"
-              [subwarehouseIndex]="subwarehouseIndex"
+              [workstationIndex]="workstationIndex"
               [maxFloors]="aisleConfig.num_floors"
               [maxRows]="aisleConfig.num_rows"
               [maxAisles]="aisleConfig.num_aisles"
@@ -235,7 +235,7 @@
         <div class="col-md-6">
           <small class="text-muted">
             <i class="fas fa-info-circle me-1"></i>
-            Subwarehouse ID: B{{ subwarehouseIndex + 1 }}
+            Workstation ID: B{{ workstationIndex + 1 }}
           </small>
         </div>
         <div class="col-md-6 text-end">

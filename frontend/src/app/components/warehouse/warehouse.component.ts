@@ -21,11 +21,11 @@ export class WarehouseVisualizerComponent implements OnInit {
       height: 1500,
       unit: "cm",
     },
-    num_subwarehouses: 2,
-    subwarehouse_gap: 1000,
-    subwarehouse_gap_unit: "cm",
-    subwarehouse_configs: [],
-    subwarehouses: false
+    num_workstations: 2,
+    workstation_gap: 1000,
+    workstation_gap_unit: "cm",
+    workstation_configs: [],
+    workstations: false
   };
 
   // Separate units for each dimension field
@@ -42,7 +42,7 @@ export class WarehouseVisualizerComponent implements OnInit {
     height: 3000
   };
 
-  subwarehouses: any[] = [];
+  workstations: any[] = [];
   layoutData: LayoutData | null = null;
   is3DView: boolean = true;
   statusMessage: string = "Ready";
@@ -51,8 +51,8 @@ export class WarehouseVisualizerComponent implements OnInit {
   // Warehouse dimensions for visualization (in cm)
   warehouseDimensions: { length: number; width: number; height: number } | null = null;
 
-  // Taisle previous num_subwarehouses to avoid unnecessary reinitialization
-  private previousNumSubwarehouses: number = 5;
+  // Taisle previous num_workstations to avoid unnecessary reinitialization
+  private previousNumWorkstations: number = 5;
 
   palletColors: { [key: string]: string } = {
     wooden: "#8B4513",
@@ -63,8 +63,8 @@ export class WarehouseVisualizerComponent implements OnInit {
   constructor(private warehouseService: WarehouseService) {}
 
   ngOnInit(): void {
-    this.previousNumSubwarehouses = this.warehouseConfig.num_subwarehouses;
-    this.initializeSubwarehouses();
+    this.previousNumWorkstations = this.warehouseConfig.num_workstations;
+    this.initializeWorkstations();
     this.syncDimensionsFromConfig();
     this.updateWarehouseDimensions();
   }
@@ -118,7 +118,7 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   // TaisleBy functions for *ngFor to prevent unnecessary re-renders
-  taisleBySubwarehouseIndex(index: number, subwarehouse: any): number {
+  taisleByWorkstationIndex(index: number, workstation: any): number {
     return index;
   }
 
@@ -131,24 +131,24 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   // Called on blur to avoid losing focus while typing
-  onNumSubwarehousesBlur(): void {
-    const newNumSubwarehouses = this.warehouseConfig.num_subwarehouses;
-    if (newNumSubwarehouses !== this.previousNumSubwarehouses && newNumSubwarehouses > 0) {
-      this.adjustSubwarehousesArray(newNumSubwarehouses);
-      this.previousNumSubwarehouses = newNumSubwarehouses;
+  onNumWorkstationsBlur(): void {
+    const newNumWorkstations = this.warehouseConfig.num_workstations;
+    if (newNumWorkstations !== this.previousNumWorkstations && newNumWorkstations > 0) {
+      this.adjustWorkstationsArray(newNumWorkstations);
+      this.previousNumWorkstations = newNumWorkstations;
     }
   }
 
-  initializeSubwarehouses(): void {
-    this.subwarehouses = [];
-    for (let i = 0; i < this.warehouseConfig.num_subwarehouses; i++) {
-      this.subwarehouses.push(this.createDefaultSubwarehouse());
+  initializeWorkstations(): void {
+    this.workstations = [];
+    for (let i = 0; i < this.warehouseConfig.num_workstations; i++) {
+      this.workstations.push(this.createDefaultWorkstation());
     }
-    this.updateSubwarehouseConfigs();
+    this.updateWorkstationConfigs();
     this.updateWarehouseDimensions();
   }
 
-  private createDefaultSubwarehouse(): any {
+  private createDefaultWorkstation(): any {
     return {
       aisleConfig: {
         num_floors: 4,
@@ -173,26 +173,26 @@ export class WarehouseVisualizerComponent implements OnInit {
     };
   }
 
-  private adjustSubwarehousesArray(newNumSubwarehouses: number): void {
-    const currentLength = this.subwarehouses.length;
+  private adjustWorkstationsArray(newNumWorkstations: number): void {
+    const currentLength = this.workstations.length;
     
-    if (newNumSubwarehouses > currentLength) {
-      // Add new subwarehouses
-      for (let i = currentLength; i < newNumSubwarehouses; i++) {
-        this.subwarehouses.push(this.createDefaultSubwarehouse());
+    if (newNumWorkstations > currentLength) {
+      // Add new workstations
+      for (let i = currentLength; i < newNumWorkstations; i++) {
+        this.workstations.push(this.createDefaultWorkstation());
       }
-    } else if (newNumSubwarehouses < currentLength) {
-      // Remove excess subwarehouses
-      this.subwarehouses.splice(newNumSubwarehouses);
+    } else if (newNumWorkstations < currentLength) {
+      // Remove excess workstations
+      this.workstations.splice(newNumWorkstations);
     }
     
-    this.updateSubwarehouseConfigs();
+    this.updateWorkstationConfigs();
   }
 
-  updateSubwarehouseConfigs(): void {
-    this.warehouseConfig.subwarehouse_configs = this.subwarehouses.map((subwarehouse, index) => {
-      const aisleConfig = subwarehouse.aisleConfig;
-      const wallGaps = subwarehouse.wallGaps || {
+  updateWorkstationConfigs(): void {
+    this.warehouseConfig.workstation_configs = this.workstations.map((workstation, index) => {
+      const aisleConfig = workstation.aisleConfig;
+      const wallGaps = workstation.wallGaps || {
         front: { value: aisleConfig.gap_front, unit: "cm" },
         back: { value: aisleConfig.gap_back, unit: "cm" },
         left: { value: aisleConfig.gap_left, unit: "cm" },
@@ -224,9 +224,9 @@ export class WarehouseVisualizerComponent implements OnInit {
       };
 
       return {
-        subwarehouse_index: index,
+        workstation_index: index,
         aisle_config: aisleConfigForBackend,
-        pallet_configs: subwarehouse.pallets.map((pallet: any) => ({
+        pallet_configs: workstation.pallets.map((pallet: any) => ({
           ...pallet,
           color: this.palletColors[pallet.type] || "#8B4513",
         })),
@@ -234,7 +234,7 @@ export class WarehouseVisualizerComponent implements OnInit {
     });
   }
 
-  addPallet(subwarehouseIndex: number): void {
+  addPallet(workstationIndex: number): void {
     const newPallet: PalletConfig = {
       type: "wooden",
       weight: 1200,
@@ -245,43 +245,43 @@ export class WarehouseVisualizerComponent implements OnInit {
       position: { floor: 1, row: 1, col: 1 },
     };
 
-    if (!this.subwarehouses[subwarehouseIndex].pallets) {
-      this.subwarehouses[subwarehouseIndex].pallets = [];
+    if (!this.workstations[workstationIndex].pallets) {
+      this.workstations[workstationIndex].pallets = [];
     }
-    this.subwarehouses[subwarehouseIndex].pallets.push(newPallet);
-    this.updateSubwarehouseConfigs();
+    this.workstations[workstationIndex].pallets.push(newPallet);
+    this.updateWorkstationConfigs();
   }
 
-  removePallet(subwarehouseIndex: number, palletIndex: number): void {
-    if (this.subwarehouses[subwarehouseIndex]?.pallets) {
-      this.subwarehouses[subwarehouseIndex].pallets.splice(palletIndex, 1);
-      this.updateSubwarehouseConfigs();
+  removePallet(workstationIndex: number, palletIndex: number): void {
+    if (this.workstations[workstationIndex]?.pallets) {
+      this.workstations[workstationIndex].pallets.splice(palletIndex, 1);
+      this.updateWorkstationConfigs();
     }
   }
 
-  updateAisleGaps(subwarehouseIndex: number): void {
-    const numAisles = this.subwarehouses[subwarehouseIndex].aisleConfig.num_aisles;
-    const currentGaps = this.subwarehouses[subwarehouseIndex].aisleConfig.custom_gaps || [];
+  updateAisleGaps(workstationIndex: number): void {
+    const numAisles = this.workstations[workstationIndex].aisleConfig.num_aisles;
+    const currentGaps = this.workstations[workstationIndex].aisleConfig.custom_gaps || [];
     const newGaps = Array(numAisles - 1).fill(500);
 
     for (let i = 0; i < Math.min(currentGaps.length, newGaps.length); i++) {
       newGaps[i] = currentGaps[i];
     }
 
-    this.subwarehouses[subwarehouseIndex].aisleConfig.custom_gaps = newGaps;
-    this.updateSubwarehouseConfigs();
+    this.workstations[workstationIndex].aisleConfig.custom_gaps = newGaps;
+    this.updateWorkstationConfigs();
   }
 
   getTotalPallets(): number {
-    return this.subwarehouses.reduce(
-      (total, subwarehouse) => total + (subwarehouse.pallets?.length || 0),
+    return this.workstations.reduce(
+      (total, workstation) => total + (workstation.pallets?.length || 0),
       0
     );
   }
 
-  getTotalPalletsWeight(subwarehouse: any): number {
+  getTotalPalletsWeight(workstation: any): number {
     return (
-      subwarehouse.pallets?.reduce(
+      workstation.pallets?.reduce(
         (total: number, pallet: any) => total + (pallet.weight || 0),
         0
       ) || 0
@@ -289,19 +289,19 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   onPalletChange(
-    subwarehouseIndex: number,
+    workstationIndex: number,
     palletIndex: number,
     updatedPallet: PalletConfig
   ): void {
-    if (this.subwarehouses[subwarehouseIndex]?.pallets[palletIndex]) {
-      this.subwarehouses[subwarehouseIndex].pallets[palletIndex] = updatedPallet;
-      this.updateSubwarehouseConfigs();
+    if (this.workstations[workstationIndex]?.pallets[palletIndex]) {
+      this.workstations[workstationIndex].pallets[palletIndex] = updatedPallet;
+      this.updateWorkstationConfigs();
     }
   }
 
   generateLayout(): void {
     this.setStatus("Generating layout...", "text-warning");
-    this.updateSubwarehouseConfigs();
+    this.updateWorkstationConfigs();
     this.updateWarehouseDimensions();
     
     this.warehouseService.createWarehouse(this.warehouseConfig).subscribe({

@@ -80,7 +80,7 @@ body {
 
 /* Three.js canvas */
 canvas {
-  display: subwarehouse;
+  display: workstation;
   outline: none;
 }
 

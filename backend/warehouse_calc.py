@@ -40,32 +40,32 @@ class WarehouseCalculator:
         if W <= 0 or L <= 0 or H <= 0:
             raise ValueError("Warehouse dimensions must be greater than zero.")
         
-        n_subwarehouses = config['num_subwarehouses']
-        bg = self.to_cm(config['subwarehouse_gap'], config['subwarehouse_gap_unit'])
-        if n_subwarehouses <= 0:
-            raise ValueError("Number of subwarehouses must be at least 1.")
+        n_workstations = config['num_workstations']
+        bg = self.to_cm(config['workstation_gap'], config['workstation_gap_unit'])
+        if n_workstations <= 0:
+            raise ValueError("Number of workstations must be at least 1.")
         if bg < 0:
-            raise ValueError("Subwarehouse gap cannot be negative.")
+            raise ValueError("Workstation gap cannot be negative.")
         
-        # Calculate subwarehouse width - subwarehouses are distributed along X axis
-        total_gaps = bg * (n_subwarehouses - 1) if n_subwarehouses > 1 else 0
+        # Calculate workstation width - workstations are distributed along X axis
+        total_gaps = bg * (n_workstations - 1) if n_workstations > 1 else 0
         if total_gaps >= W:
             raise ValueError(
-                "Total subwarehouse gaps are greater than or equal to warehouse width. "
-                "Reduce subwarehouse gap or number of subwarehouses, or increase warehouse width."
+                "Total workstation gaps are greater than or equal to warehouse width. "
+                "Reduce workstation gap or number of workstations, or increase warehouse width."
             )
-        subwarehouse_w = (W - total_gaps) / n_subwarehouses if n_subwarehouses > 0 else 0
-        if subwarehouse_w <= 0:
+        workstation_w = (W - total_gaps) / n_workstations if n_workstations > 0 else 0
+        if workstation_w <= 0:
             raise ValueError(
-                "Computed subwarehouse width is not positive. "
-                "Check warehouse width, subwarehouse gap and number of subwarehouses."
+                "Computed workstation width is not positive. "
+                "Check warehouse width, workstation gap and number of workstations."
             )
         
-        subwarehouses_data = []
+        workstations_data = []
         
-        for i, b_conf in enumerate(config['subwarehouse_configs']):
-            # Subwarehouse starting X position (positive coordinates)
-            subwarehouse_start_x = i * (subwarehouse_w + bg)
+        for i, b_conf in enumerate(config['workstation_configs']):
+            # Workstation starting X position (positive coordinates)
+            workstation_start_x = i * (workstation_w + bg)
             
             rc = b_conf['aisle_config']
             gf = self.to_cm(rc['gap_front'], rc['wall_gap_unit'])
@@ -73,18 +73,18 @@ class WarehouseCalculator:
             gl = self.to_cm(rc['gap_left'], rc['wall_gap_unit'])
             gr = self.to_cm(rc['gap_right'], rc['wall_gap_unit'])
             
-            # Available space within subwarehouse after wall gaps
-            avail_w = subwarehouse_w - gl - gr  # Available width for aisles
+            # Available space within workstation after wall gaps
+            avail_w = workstation_w - gl - gr  # Available width for aisles
             avail_l = L - gf - gb        # Available length for rows
 
             if avail_w <= 0:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: wall gaps (left/right) consume all width. "
+                    f"Workstation {i+1}: wall gaps (left/right) consume all width. "
                     "Reduce left/right wall gaps or increase warehouse width."
                 )
             if avail_l <= 0:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: wall gaps (front/back) consume all length. "
+                    f"Workstation {i+1}: wall gaps (front/back) consume all length. "
                     "Reduce front/back wall gaps or increase warehouse length."
                 )
             
@@ -93,11 +93,11 @@ class WarehouseCalculator:
             num_aisles = rc['num_aisles']
 
             if rows <= 0:
-                raise ValueError(f"Subwarehouse {i+1}: number of rows must be at least 1.")
+                raise ValueError(f"Workstation {i+1}: number of rows must be at least 1.")
             if floors <= 0:
-                raise ValueError(f"Subwarehouse {i+1}: number of floors must be at least 1.")
+                raise ValueError(f"Workstation {i+1}: number of floors must be at least 1.")
             if num_aisles <= 0:
-                raise ValueError(f"Subwarehouse {i+1}: number of aisles must be at least 1.")
+                raise ValueError(f"Workstation {i+1}: number of aisles must be at least 1.")
             
             # Custom gaps between aisles (columns)
             custom_gaps = [self.to_cm(g, rc['wall_gap_unit']) for g in rc.get('custom_gaps', [])]
@@ -105,8 +105,8 @@ class WarehouseCalculator:
 
             if total_custom_gaps >= avail_w:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: sum of aisle gaps ({total_custom_gaps:.2f} cm) "
-                    f"is greater than or equal to available subwarehouse width ({avail_w:.2f} cm). "
+                    f"Workstation {i+1}: sum of aisle gaps ({total_custom_gaps:.2f} cm) "
+                    f"is greater than or equal to available workstation width ({avail_w:.2f} cm). "
                     "Reduce aisle gaps, reduce number of aisles, or increase warehouse width."
                 )
             
@@ -118,17 +118,17 @@ class WarehouseCalculator:
             # --- Validation for aisle dimensions and height ---
             if aisle_w < self.MIN_RACK_WIDTH_CM:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: aisle width ({aisle_w:.2f} cm) is too small. "
+                    f"Workstation {i+1}: aisle width ({aisle_w:.2f} cm) is too small. "
                     "Decrease number of aisles or aisle gaps, or increase warehouse width."
                 )
             if aisle_l < self.MIN_RACK_LENGTH_CM:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: aisle length ({aisle_l:.2f} cm) is too small. "
+                    f"Workstation {i+1}: aisle length ({aisle_l:.2f} cm) is too small. "
                     "Decrease number of rows or increase warehouse length."
                 )
             if floor_h < self.MIN_FLOOR_HEIGHT_CM:
                 raise ValueError(
-                    f"Subwarehouse {i+1}: floor/aisle height ({floor_h:.2f} cm) is too small for "
+                    f"Workstation {i+1}: floor/aisle height ({floor_h:.2f} cm) is too small for "
                     "the given number of floors and warehouse height. "
                     "Reduce number of floors or increase warehouse height."
                 )
@@ -141,7 +141,7 @@ class WarehouseCalculator:
                 aisle_y = gf + r * aisle_l
                 
                 # Iterate through columns/aisles (along X axis)
-                current_x = subwarehouse_start_x + gl
+                current_x = workstation_start_x + gl
                 
                 for c in range(num_aisles):
                     # Add custom gap before this aisle (except for first aisle)
@@ -190,16 +190,16 @@ class WarehouseCalculator:
                     # Move X position to next aisle
                     current_x += aisle_w
             
-            subwarehouses_data.append({
-                "id": f"subwarehouse_{i+1}",
-                "subwarehouse_index": i,
+            workstations_data.append({
+                "id": f"workstation_{i+1}",
+                "workstation_index": i,
                 "position": {
-                    "x": subwarehouse_start_x,
+                    "x": workstation_start_x,
                     "y": 0,
                     "z": 0
                 },
                 "dimensions": {
-                    "width": subwarehouse_w,
+                    "width": workstation_w,
                     "length": L,
                     "height": H
                 },
@@ -213,5 +213,5 @@ class WarehouseCalculator:
                 "length": L,
                 "height": H
             },
-            "subwarehouses": subwarehouses_data
+            "workstations": workstations_data
         }

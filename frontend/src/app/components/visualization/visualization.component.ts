@@ -13,13 +13,14 @@ import {
 } from "@angular/core";
 import {
   LayoutData,
-  SubwarehouseData,
+  WorkstationData,
   AisleData,
   PalletData,
   WarehouseConfig,
 } from "../../models/warehouse.models";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import * as PIXI from "pixi.js";
 
 @Component({
   selector: "app-visualization",
@@ -63,8 +64,9 @@ export class VisualizationComponent
   private animationFrameId!: number;
   private labelSprites: THREE.Sprite[] = [];
 
-  // 2D Canvas variables
-  private ctx!: CanvasRenderingContext2D;
+  // 2D (PIXI) variables
+  private pixiApp?: PIXI.Application;
+  private pixiStage?: PIXI.Container;
   private isViewInitialized = false;
   private wireframeMode = false;
 
@@ -146,6 +148,12 @@ export class VisualizationComponent
     }
     if (this.renderer) {
       this.renderer.dispose();
+    }
+    if (this.pixiApp) {
+      // Destroy PIXI app and resources (baseTexture cleanup is covered by texture:true)
+      this.pixiApp.destroy(true, { children: true, texture: true });
+      this.pixiApp = undefined;
+      this.pixiStage = undefined;
     }
     // Clean up labels
     this.labelSprites.forEach(sprite => {
@@ -446,10 +454,10 @@ export class VisualizationComponent
     // 1. Draw Warehouse Floor Outline
     this.drawFloorBoundary(mainGroup);
 
-    // 2. Draw Subwarehouses and Aisles
-    if (this.layoutData.subwarehouses) {
-      this.layoutData.subwarehouses.forEach((subwarehouse) => {
-        this.drawSubwarehouse(mainGroup, subwarehouse);
+    // 2. Draw Workstations and Aisles
+    if (this.layoutData.workstations) {
+      this.layoutData.workstations.forEach((workstation) => {
+        this.drawWorkstation(mainGroup, workstation);
       });
     }
 
@@ -495,13 +503,13 @@ export class VisualizationComponent
     });
   }
 
-  private drawSubwarehouse(group: THREE.Group, subwarehouse: SubwarehouseData) {
+  private drawWorkstation(group: THREE.Group, workstation: WorkstationData) {
     // In Z-up coordinate system:
     // X = Width direction, Y = Length/Depth direction, Z = Height direction
     // Aisle positions are already absolute (calculated by backend)
     
-    const subwarehouseGroup = new THREE.Group();
-    subwarehouseGroup.name = `subwarehouse-${subwarehouse.id}`;
+    const workstationGroup = new THREE.Group();
+    workstationGroup.name = `workstation-${workstation.id}`;
     
     // Taisle unique floors, rows, and columns for labeling
     const uniqueFloors = new Set<number>();
@@ -510,57 +518,57 @@ export class VisualizationComponent
     const aislesByPosition: Map<string, AisleData> = new Map();
     
     // Collect info about all aisles
-    subwarehouse.aisles.forEach((aisle) => {
+    workstation.aisles.forEach((aisle) => {
       uniqueFloors.add(aisle.indices.floor);
       uniqueRows.add(aisle.indices.row);
       uniqueCols.add(aisle.indices.col);
       aislesByPosition.set(`${aisle.indices.floor}-${aisle.indices.row}-${aisle.indices.col}`, aisle);
     });
     
-    // Draw each aisle in the subwarehouse
-    subwarehouse.aisles.forEach((aisle) => {
-      this.drawAisle(subwarehouseGroup, aisle);
+    // Draw each aisle in the workstation
+    workstation.aisles.forEach((aisle) => {
+      this.drawAisle(workstationGroup, aisle);
     });
     
-    // Add Subwarehouse Label at the front-center-top
-    if (subwarehouse.aisles.length > 0) {
-      const subwarehouseIndex = (subwarehouse as any).subwarehouse_index !== undefined ? (subwarehouse as any).subwarehouse_index + 1 : 
-                         parseInt(subwarehouse.id.replace('subwarehouse_', '')) || 1;
+    // Add Workstation Label at the front-center-top
+    if (workstation.aisles.length > 0) {
+      const workstationIndex = (workstation as any).workstation_index !== undefined ? (workstation as any).workstation_index + 1 : 
+                         parseInt(workstation.id.replace('workstation_', '')) || 1;
       
-      // Calculate subwarehouse bounds
-      const subwarehouseBounds = this.calculateSubwarehouseBounds(subwarehouse.aisles);
+      // Calculate workstation bounds
+      const workstationBounds = this.calculateWorkstationBounds(workstation.aisles);
       
-      // Subwarehouse label position - front center, above the subwarehouse
-      const subwarehouseLabelPos = new THREE.Vector3(
-        subwarehouseBounds.centerX,
-        subwarehouseBounds.minY - 80,
-        subwarehouseBounds.maxZ + 100
+      // Workstation label position - front center, above the workstation
+      const workstationLabelPos = new THREE.Vector3(
+        workstationBounds.centerX,
+        workstationBounds.minY - 80,
+        workstationBounds.maxZ + 100
       );
       
-      const subwarehouseLabel = this.createTextSprite(`Subwarehouse ${subwarehouseIndex}`, {
+      const workstationLabel = this.createTextSprite(`Workstation ${workstationIndex}`, {
         backgroundColor: '#2196f3',
         borderColor: '#1565c0',
         color: '#ffffff',
         fontSize: 28
       });
-      subwarehouseLabel.position.copy(subwarehouseLabelPos);
-      subwarehouseLabel.scale.set(180, 45, 1);
-      subwarehouseGroup.add(subwarehouseLabel);
+      workstationLabel.position.copy(workstationLabelPos);
+      workstationLabel.scale.set(180, 45, 1);
+      workstationGroup.add(workstationLabel);
       
       // Add Floor Labels (on the left side)
-      this.addFloorLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueFloors);
+      this.addFloorLabels(workstationGroup, workstation.aisles, workstationBounds, uniqueFloors);
       
       // Add Row Labels (at the front)
-      this.addRowLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueRows);
+      this.addRowLabels(workstationGroup, workstation.aisles, workstationBounds, uniqueRows);
       
       // Add Aisle/Column Labels (at the top)
-      this.addAisleLabels(subwarehouseGroup, subwarehouse.aisles, subwarehouseBounds, uniqueCols);
+      this.addAisleLabels(workstationGroup, workstation.aisles, workstationBounds, uniqueCols);
     }
     
-    group.add(subwarehouseGroup);
+    group.add(workstationGroup);
   }
 
-  private calculateSubwarehouseBounds(aisles: AisleData[]): {
+  private calculateWorkstationBounds(aisles: AisleData[]): {
     minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number;
     centerX: number; centerY: number; centerZ: number;
   } {
@@ -835,77 +843,73 @@ export class VisualizationComponent
   private initialize2DView() {
     const canvas = this.twoCanvasRef?.nativeElement;
     if (!canvas) return;
-    
-    this.ctx = canvas.getContext("2d")!;
-    const container = canvas.parentElement;
-    if (container) {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-    }
+
+    const container = canvas.parentElement || canvas;
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 600;
+
+    this.pixiApp = new PIXI.Application({
+      view: canvas,
+      width,
+      height,
+      antialias: true,
+      backgroundAlpha: 1,
+      backgroundColor: 0xffffff,
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
+    });
+    this.pixiStage = new PIXI.Container();
+    this.pixiApp.stage.addChild(this.pixiStage);
   }
 
   private update2DVisualization() {
-    if (!this.layoutData || !this.ctx || !this.twoCanvasRef) return;
+    if (!this.layoutData || !this.pixiApp || !this.pixiStage || !this.twoCanvasRef) return;
 
     const canvas = this.twoCanvasRef.nativeElement;
-    const container = canvas.parentElement;
-    if (container) {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-    }
-    
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+    const container = canvas.parentElement || canvas;
+    const canvasWidth = container.clientWidth || 800;
+    const canvasHeight = container.clientHeight || 600;
 
-    this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    this.pixiApp.renderer.resize(canvasWidth, canvasHeight);
+    this.pixiStage.removeChildren();
+    const stage = this.pixiStage;
 
-    // Use stored warehouse dimensions
-    const whWidth = this.whWidth;   // X dimension
-    const whLength = this.whLength; // Y dimension
+    const whWidth = this.whWidth;
+    const whLength = this.whLength;
 
     const padding = 60;
     const scaleX = (canvasWidth - padding * 2) / whWidth;
     const scaleY = (canvasHeight - padding * 2) / whLength;
     const scale = Math.min(scaleX, scaleY);
 
-    // Calculate offset to center the drawing
     const drawWidth = whWidth * scale;
     const drawHeight = whLength * scale;
     const offsetX = (canvasWidth - drawWidth) / 2;
     const offsetY = (canvasHeight - drawHeight) / 2;
 
-    // 1. Draw Background Grid
-    this.draw2DGrid(offsetX, offsetY, drawWidth, drawHeight, scale);
+    this.draw2DGridPIXI(offsetX, offsetY, drawWidth, drawHeight, scale);
 
-    // 2. Draw Warehouse Boundary
-    this.ctx.strokeStyle = "#333";
-    this.ctx.lineWidth = 3;
-    this.ctx.setLineDash([15, 8]);
-    this.ctx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
-    this.ctx.setLineDash([]);
+    const boundary = new PIXI.Graphics();
+    boundary.lineStyle(3, 0x333333, 1);
+    boundary.drawRect(offsetX, offsetY, drawWidth, drawHeight);
+    stage.addChild(boundary);
 
-    // 3. Draw Axis Labels
-    this.draw2DAxisLabels(offsetX, offsetY, drawWidth, drawHeight, whWidth, whLength);
+    this.draw2DAxisLabelsPIXI(offsetX, offsetY, drawWidth, drawHeight, whWidth, whLength);
 
-    // 4. Draw Subwarehouses & Aisles with Labels
-    if (this.layoutData.subwarehouses) {
-      this.layoutData.subwarehouses.forEach((subwarehouse, subwarehouseIdx) => {
-        // Taisle unique rows and columns for this subwarehouse
+    if ((this.layoutData as any).workstations) {
+      this.layoutData.workstations.forEach((workstation: any, subIdx: number) => {
         const rowPositions: Map<number, number> = new Map();
         const colPositions: Map<number, number> = new Map();
-        let subwarehouseMinX = Infinity, subwarehouseMaxX = -Infinity;
-        let subwarehouseMinY = Infinity, subwarehouseMaxY = -Infinity;
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
         
-        // First pass: collect positions and draw aisles
-        subwarehouse.aisles.forEach(aisle => {
-          // Only consider floor 1 aisles for 2D top-down view labels
+        workstation.aisles.forEach((aisle: any) => {
           if (aisle.indices.floor === 1) {
             const rX = offsetX + aisle.position.x * scale;
             const rY = offsetY + aisle.position.y * scale;
             const rW = aisle.dimensions.width * scale;
             const rL = aisle.dimensions.length * scale;
 
-            // Taisle positions
             if (!rowPositions.has(aisle.indices.row)) {
               rowPositions.set(aisle.indices.row, rY + rL / 2);
             }
@@ -913,80 +917,74 @@ export class VisualizationComponent
               colPositions.set(aisle.indices.col, rX + rW / 2);
             }
             
-            // Taisle subwarehouse bounds
-            subwarehouseMinX = Math.min(subwarehouseMinX, rX);
-            subwarehouseMaxX = Math.max(subwarehouseMaxX, rX + rW);
-            subwarehouseMinY = Math.min(subwarehouseMinY, rY);
-            subwarehouseMaxY = Math.max(subwarehouseMaxY, rY + rL);
+            minX = Math.min(minX, rX);
+            maxX = Math.max(maxX, rX + rW);
+            minY = Math.min(minY, rY);
+            maxY = Math.max(maxY, rY + rL);
 
-            // Fill with semi-transparent blue
-            this.ctx.fillStyle = "#4a90d9";
-            this.ctx.globalAlpha = 0.35;
-            this.ctx.fillRect(rX, rY, rW, rL);
-            
-            // Draw border
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.strokeStyle = "#1565c0";
-            this.ctx.lineWidth = 1.5;
-            this.ctx.strokeRect(rX, rY, rW, rL);
+            const aisleRect = new PIXI.Graphics();
+            aisleRect.beginFill(0x4a90d9, 0.35);
+            aisleRect.lineStyle(1.5, 0x1565c0, 1);
+            aisleRect.drawRect(rX, rY, rW, rL);
+            aisleRect.endFill();
+            stage.addChild(aisleRect);
 
-            // Draw aisle cell label (small)
-            this.ctx.fillStyle = "#1565c0";
-            this.ctx.font = "9px Arial";
-            this.ctx.textAlign = "center";
-            this.ctx.fillText(
+            const aisleLabel = this.makeTextPIXI(
               `R${aisle.indices.row}C${aisle.indices.col}`,
-              rX + rW / 2,
-              rY + rL / 2 + 3
+              9,
+              0x1565c0
             );
+            aisleLabel.x = rX + rW / 2;
+            aisleLabel.y = rY + rL / 2;
+            aisleLabel.anchor.set(0.5);
+            stage.addChild(aisleLabel);
 
-            // Draw pallets if present
             if (aisle.pallets && aisle.pallets.length > 0) {
-              aisle.pallets.forEach(pallet => {
+              aisle.pallets.forEach((pallet: PalletData) => {
                 const palletMargin = Math.min(rW, rL) * 0.15;
-                this.ctx.fillStyle = pallet.color || "#8B4513";
-                this.ctx.globalAlpha = 0.7;
-                this.ctx.fillRect(
+                const palletRect = new PIXI.Graphics();
+                const color = pallet.color?.startsWith("#")
+                  ? parseInt(pallet.color.slice(1), 16)
+                  : 0x8b4513;
+                palletRect.beginFill(color, 0.7);
+                palletRect.drawRect(
                   rX + palletMargin,
                   rY + palletMargin,
                   rW - palletMargin * 2,
                   rL - palletMargin * 2
                 );
-                this.ctx.globalAlpha = 1.0;
+                palletRect.endFill();
+                stage.addChild(palletRect);
               });
             }
           }
         });
 
-        // Draw Subwarehouse Label (top)
-        if (subwarehouseMinX !== Infinity) {
-          const subwarehouseCenterX = (subwarehouseMinX + subwarehouseMaxX) / 2;
-          
-          // Subwarehouse label
-          this.draw2DLabel(
-            `Subwarehouse ${subwarehouseIdx + 1}`,
-            subwarehouseCenterX,
-            subwarehouseMinY - 25,
-            { backgroundColor: '#2196f3', color: '#ffffff', fontSize: 12, padding: 6 }
+        if (minX !== Infinity) {
+          const centerX = (minX + maxX) / 2;
+
+          this.drawPillLabelPIXI(
+            `Workstation ${subIdx + 1}`,
+            centerX,
+            minY - 25,
+            { bg: 0x2196f3, color: 0xffffff, fontSize: 12, padding: 6 }
           );
-          
-          // Row labels (left side)
+
           Array.from(rowPositions.entries()).sort((a, b) => a[0] - b[0]).forEach(([row, yPos]) => {
-            this.draw2DLabel(
+            this.drawPillLabelPIXI(
               `Row ${row}`,
-              subwarehouseMinX - 35,
+              minX - 35,
               yPos,
-              { backgroundColor: '#ff9800', color: '#ffffff', fontSize: 10, padding: 4 }
+              { bg: 0xff9800, color: 0xffffff, fontSize: 10, padding: 4 }
             );
           });
-          
-          // Aisle/Column labels (top)
+
           Array.from(colPositions.entries()).sort((a, b) => a[0] - b[0]).forEach(([col, xPos]) => {
-            this.draw2DLabel(
+            this.drawPillLabelPIXI(
               `Aisle ${col}`,
               xPos,
-              subwarehouseMinY - 8,
-              { backgroundColor: '#9c27b0', color: '#ffffff', fontSize: 9, padding: 3 }
+              minY - 8,
+              { bg: 0x9c27b0, color: 0xffffff, fontSize: 9, padding: 3 }
             );
           });
         }
@@ -994,122 +992,104 @@ export class VisualizationComponent
     }
   }
 
-  private draw2DLabel(
-    text: string,
-    x: number,
-    y: number,
-    options: { backgroundColor: string; color: string; fontSize: number; padding: number }
-  ) {
-    this.ctx.font = `bold ${options.fontSize}px Arial`;
-    const textWidth = this.ctx.measureText(text).width;
-    const labelWidth = textWidth + options.padding * 2;
-    const labelHeight = options.fontSize + options.padding * 2;
-    
-    // Draw background (fallback if roundRect is not supported)
-    this.ctx.fillStyle = options.backgroundColor;
-    this.ctx.beginPath();
-    const rectX = x - labelWidth / 2;
-    const rectY = y - labelHeight / 2;
-    const radius = 4;
-    const anyCtx: any = this.ctx as any;
-    if (typeof anyCtx.roundRect === "function") {
-      anyCtx.roundRect(rectX, rectY, labelWidth, labelHeight, radius);
-    } else {
-      // Simple manually-rounded rectangle
-      this.ctx.moveTo(rectX + radius, rectY);
-      this.ctx.lineTo(rectX + labelWidth - radius, rectY);
-      this.ctx.quadraticCurveTo(
-        rectX + labelWidth,
-        rectY,
-        rectX + labelWidth,
-        rectY + radius
-      );
-      this.ctx.lineTo(rectX + labelWidth, rectY + labelHeight - radius);
-      this.ctx.quadraticCurveTo(
-        rectX + labelWidth,
-        rectY + labelHeight,
-        rectX + labelWidth - radius,
-        rectY + labelHeight
-      );
-      this.ctx.lineTo(rectX + radius, rectY + labelHeight);
-      this.ctx.quadraticCurveTo(
-        rectX,
-        rectY + labelHeight,
-        rectX,
-        rectY + labelHeight - radius
-      );
-      this.ctx.lineTo(rectX, rectY + radius);
-      this.ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
-    }
-    this.ctx.fill();
-    
-    // Draw text
-    this.ctx.fillStyle = options.color;
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    this.ctx.fillText(text, x, y);
-  }
+  // ===== PIXI helpers =====
 
-  private draw2DGrid(offsetX: number, offsetY: number, width: number, height: number, scale: number) {
-    const gridSpacing = 500; // Grid every 500cm
+  private draw2DGridPIXI(offsetX: number, offsetY: number, width: number, height: number, scale: number) {
+    if (!this.pixiStage) return;
+    const grid = new PIXI.Graphics();
+    const gridSpacing = 500;
     const gridSpacingScaled = gridSpacing * scale;
-    
-    // Extend grid beyond warehouse boundaries
     const gridPadding = gridSpacingScaled * 2;
     const gridStartX = offsetX - gridPadding;
     const gridEndX = offsetX + width + gridPadding;
     const gridStartY = offsetY - gridPadding;
     const gridEndY = offsetY + height + gridPadding;
-    
-    this.ctx.strokeStyle = "#e0e0e0";
-    this.ctx.lineWidth = 0.5;
-    
-    // Vertical grid lines - extend beyond warehouse
+
+    grid.lineStyle(0.5, 0xe0e0e0, 1);
+
     const startXGrid = Math.floor(gridStartX / gridSpacingScaled) * gridSpacingScaled;
     for (let x = startXGrid; x <= gridEndX; x += gridSpacingScaled) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, gridStartY);
-      this.ctx.lineTo(x, gridEndY);
-      this.ctx.stroke();
+      grid.moveTo(x, gridStartY);
+      grid.lineTo(x, gridEndY);
     }
-    
-    // Horizontal grid lines - extend beyond warehouse
+
     const startYGrid = Math.floor(gridStartY / gridSpacingScaled) * gridSpacingScaled;
     for (let y = startYGrid; y <= gridEndY; y += gridSpacingScaled) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(gridStartX, y);
-      this.ctx.lineTo(gridEndX, y);
-      this.ctx.stroke();
+      grid.moveTo(gridStartX, y);
+      grid.lineTo(gridEndX, y);
     }
+
+    this.pixiStage.addChild(grid);
   }
 
-  private draw2DAxisLabels(
-    offsetX: number, offsetY: number, 
+  private draw2DAxisLabelsPIXI(
+    offsetX: number, offsetY: number,
     width: number, height: number,
     whWidth: number, whLength: number
   ) {
-    this.ctx.fillStyle = "#333";
-    this.ctx.font = "12px Arial";
-    
-    // X-axis label (Width)
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(`Width: ${whWidth.toFixed(0)} cm`, offsetX + width / 2, offsetY + height + 30);
-    
-    // Y-axis label (Length) - rotated
-    this.ctx.save();
-    this.ctx.translate(offsetX - 30, offsetY + height / 2);
-    this.ctx.rotate(-Math.PI / 2);
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(`Length: ${whLength.toFixed(0)} cm`, 0, 0);
-    this.ctx.restore();
+    this.drawPillLabelPIXI(
+      `Width: ${whWidth.toFixed(0)} cm`,
+      offsetX + width / 2,
+      offsetY + height + 30,
+      { bg: 0x333333, color: 0xffffff, fontSize: 12, padding: 6 }
+    );
 
-    // Scale indicators at corners
-    this.ctx.font = "10px Arial";
-    this.ctx.fillStyle = "#666";
-    this.ctx.textAlign = "left";
-    this.ctx.fillText("0", offsetX - 15, offsetY + height + 15);
-    this.ctx.textAlign = "right";
-    this.ctx.fillText(`${whWidth.toFixed(0)}`, offsetX + width + 5, offsetY + height + 15);
+    this.drawPillLabelPIXI(
+      `Length: ${whLength.toFixed(0)} cm`,
+      offsetX - 40,
+      offsetY + height / 2,
+      { bg: 0x333333, color: 0xffffff, fontSize: 12, padding: 6 },
+      true
+    );
+
+    const zeroLabel = this.makeTextPIXI("0", 10, 0x666666);
+    zeroLabel.x = offsetX - 12;
+    zeroLabel.y = offsetY + height + 12;
+    zeroLabel.anchor.set(1, 0);
+    this.pixiStage?.addChild(zeroLabel);
+
+    const widthLabel = this.makeTextPIXI(`${whWidth.toFixed(0)}`, 10, 0x666666);
+    widthLabel.x = offsetX + width + 12;
+    widthLabel.y = offsetY + height + 12;
+    widthLabel.anchor.set(0, 0);
+    this.pixiStage?.addChild(widthLabel);
+  }
+
+  private drawPillLabelPIXI(
+    text: string,
+    x: number,
+    y: number,
+    opts: { bg: number; color: number; fontSize: number; padding: number },
+    rotate90: boolean = false
+  ) {
+    const label = this.makeTextPIXI(text, opts.fontSize, opts.color);
+    // Use label's measured size instead of TextMetrics (works across Pixi versions)
+    const w = label.width + opts.padding * 2;
+    const h = label.height + opts.padding * 2;
+
+    const container = new PIXI.Container();
+    const bg = new PIXI.Graphics();
+    bg.beginFill(opts.bg, 1);
+    bg.drawRoundedRect(-w / 2, -h / 2, w, h, 6);
+    bg.endFill();
+
+    label.anchor.set(0.5);
+    container.addChild(bg);
+    container.addChild(label);
+    container.x = x;
+    container.y = y;
+    if (rotate90) container.rotation = -Math.PI / 2;
+    this.pixiStage?.addChild(container);
+  }
+
+  private makeTextPIXI(text: string, fontSize: number, color: number): PIXI.Text {
+    return new PIXI.Text(text, {
+      fontFamily: "Arial",
+      fontSize,
+      fill: color,
+      fontWeight: "bold",
+      align: "center",
+    });
   }
 
   // ============ PUBLIC METHODS ============

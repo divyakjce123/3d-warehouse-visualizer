@@ -34,20 +34,20 @@ export interface AisleConfig {
   wall_gap_unit: string;
 }
 
-export interface SubwarehouseConfig {
-  subwarehouse_index: number;
+export interface WorkstationConfig {
+  workstation_index: number;
   aisle_config: AisleConfig;
   pallet_configs: PalletConfig[];
 }
 
 export interface WarehouseConfig {
-  subwarehouses: boolean;
+  workstations: boolean;
   id: string;
   warehouse_dimensions: Dimensions;
-  num_subwarehouses: number;
-  subwarehouse_gap: number;
-  subwarehouse_gap_unit: string;
-  subwarehouse_configs: SubwarehouseConfig[];
+  num_workstations: number;
+  workstation_gap: number;
+  workstation_gap_unit: string;
+  workstation_configs: WorkstationConfig[];
 }
 
 // Layout response interfaces
@@ -77,7 +77,7 @@ export interface AisleData {
   pallets?: PalletData[];
 }
 
-export interface SubwarehouseData {
+export interface WorkstationData {
   id: string;
   position: { x: number; y: number; z: number };
   dimensions: { width: number; length: number; height: number };
@@ -90,5 +90,5 @@ export interface LayoutData {
     length: number;
     height: number;
   };
-  subwarehouses: SubwarehouseData[];
+  workstations: WorkstationData[];
 }
