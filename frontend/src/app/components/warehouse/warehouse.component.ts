@@ -19,6 +19,7 @@ export class WarehouseVisualizerComponent implements OnInit {
       length: 3000,
       width: 6000,
       height: 1500,
+      height_safety_margin: 300,
       unit: "cm",
     },
     num_workstations: 2,
@@ -32,14 +33,16 @@ export class WarehouseVisualizerComponent implements OnInit {
   dimensionUnits = {
     length: "cm",
     width: "cm", 
-    height: "cm"
+    height: "cm",
+    height_safety_margin: "cm",
   };
 
   // Display values (user sees these)
   displayDimensions = {
     length: 3000,
-    width: 2000,
-    height: 3000
+    width: 6000,
+    height: 1500,
+    height_safety_margin: 300
   };
 
   workstations: any[] = [];
@@ -49,7 +52,7 @@ export class WarehouseVisualizerComponent implements OnInit {
   statusClass: string = "text-success";
 
   // Warehouse dimensions for visualization (in cm)
-  warehouseDimensions: { length: number; width: number; height: number } | null = null;
+  warehouseDimensions: { length: number; width: number; height: number; height_safety_margin: number } | null = null;
 
   // Taisle previous num_workstations to avoid unnecessary reinitialization
   private previousNumWorkstations: number = 5;
@@ -74,10 +77,11 @@ export class WarehouseVisualizerComponent implements OnInit {
     this.displayDimensions.length = this.warehouseConfig.warehouse_dimensions.length;
     this.displayDimensions.width = this.warehouseConfig.warehouse_dimensions.width;
     this.displayDimensions.height = this.warehouseConfig.warehouse_dimensions.height;
+    this.displayDimensions.height_safety_margin = this.warehouseConfig.warehouse_dimensions.height_safety_margin;
   }
 
   // Update config from display dimensions (converting to cm)
-  updateDimensionValue(field: 'length' | 'width' | 'height'): void {
+  updateDimensionValue(field: 'length' | 'width' | 'height' | 'height_safety_margin'): void {
     const value = this.displayDimensions[field];
     const unit = this.dimensionUnits[field];
     const factor = this.getUnitConversionFactor(unit);
@@ -88,7 +92,7 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   // When unit changes, convert the display value
-  onUnitChange(field: 'length' | 'width' | 'height', newUnit: string): void {
+  onUnitChange(field: 'length' | 'width' | 'height' | 'height_safety_margin', newUnit: string): void {
     const oldUnit = this.dimensionUnits[field];
     const oldValue = this.displayDimensions[field];
     
@@ -106,7 +110,8 @@ export class WarehouseVisualizerComponent implements OnInit {
     this.warehouseDimensions = {
       length: dim.length,
       width: dim.width,
-      height: dim.height
+      height: dim.height,
+      height_safety_margin: dim.height_safety_margin
     };
   }
 
@@ -313,7 +318,8 @@ export class WarehouseVisualizerComponent implements OnInit {
           this.warehouseDimensions = {
             width: this.layoutData.warehouse_dimensions.width,
             length: this.layoutData.warehouse_dimensions.length,
-            height: this.layoutData.warehouse_dimensions.height
+            height: this.layoutData.warehouse_dimensions.height,
+            height_safety_margin: this.layoutData.warehouse_dimensions.height_safety_margin
           };
         }
         

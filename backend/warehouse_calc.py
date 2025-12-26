@@ -36,6 +36,7 @@ class WarehouseCalculator:
         W = self.to_cm(wh_dim['width'], wh_dim['unit'])   # X dimension
         L = self.to_cm(wh_dim['length'], wh_dim['unit'])  # Y dimension
         H = self.to_cm(wh_dim['height'], wh_dim['unit'])  # Z dimension
+        H_safety = self.to_cm(wh_dim['height_safety_margin'], wh_dim['unit'])
 
         if W <= 0 or L <= 0 or H <= 0:
             raise ValueError("Warehouse dimensions must be greater than zero.")
@@ -113,7 +114,7 @@ class WarehouseCalculator:
             # Calculate aisle dimensions
             aisle_w = (avail_w - total_custom_gaps) / num_aisles if num_aisles > 0 else 0
             aisle_l = avail_l / rows if rows > 0 else 0
-            floor_h = H / floors if floors > 0 else 0
+            floor_h = (H - H_safety) / floors if floors > 0 else 0
 
             # --- Validation for aisle dimensions and height ---
             if aisle_w < self.MIN_RACK_WIDTH_CM:

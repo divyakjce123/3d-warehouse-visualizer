@@ -71,9 +71,10 @@ export class VisualizationComponent
   private wireframeMode = false;
 
   // Warehouse dimensions from layout response
-  private whWidth: number = 2000;
+  private whWidth: number = 6000;
   private whLength: number = 3000;
-  private whHeight: number = 800;
+  private whHeight: number = 1500;
+  private safetyMargin: number = 300;
 
   // Configuration for "Image 2" Styling
   private readonly COLORS = {

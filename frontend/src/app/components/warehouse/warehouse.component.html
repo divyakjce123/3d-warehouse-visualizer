@@ -99,6 +99,36 @@
               </select>
             </div>
           </div>
+
+          <!-- Height Safety Margin -->
+          <div class="row g-2 align-items-center">
+            <div class="col-3">
+              <label class="form-label small mb-0">Height Safety Margin</label>
+            </div>
+            <div class="col-5">
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                [(ngModel)]="displayDimensions.height_safety_margin"
+                (blur)="updateDimensionValue('height_safety_margin')"
+                min="1"
+                step="any"
+              />
+            </div>
+            <div class="col-4">
+              <select
+                class="form-select form-select-sm"
+                [ngModel]="dimensionUnits.height_safety_margin"
+                (ngModelChange)="onUnitChange('height_safety_margin', $event)"
+              >
+                <option value="cm">cm</option>
+                <option value="m">m</option>
+                <option value="mm">mm</option>
+                <option value="ft">ft</option>
+                <option value="in">in</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -110,7 +140,9 @@
         <div class="card-body">
           <div class="row g-2 mb-2 align-items-center">
             <div class="col-6">
-              <label class="form-label small mb-0">Number of Workstations</label>
+              <label class="form-label small mb-0"
+                >Number of Workstations</label
+              >
             </div>
             <div class="col-6">
               <input
@@ -155,7 +187,11 @@
           <div class="accordion" id="workstationsAccordion">
             <div
               class="accordion-item"
-              *ngFor="let workstation of workstations; let i = index; taisleBy: taisleByWorkstationIndex"
+              *ngFor="
+                let workstation of workstations;
+                let i = index;
+                taisleBy: taisleByWorkstationIndex
+              "
             >
               <h2 class="accordion-header">
                 <button
@@ -177,7 +213,9 @@
 
                   <div class="row g-2 mb-2 align-items-center">
                     <div class="col-7">
-                      <label class="form-label small mb-0">Number of Floors</label>
+                      <label class="form-label small mb-0"
+                        >Number of Floors</label
+                      >
                     </div>
                     <div class="col-5">
                       <input
@@ -193,7 +231,9 @@
 
                   <div class="row g-2 mb-2 align-items-center">
                     <div class="col-7">
-                      <label class="form-label small mb-0">Number of Rows</label>
+                      <label class="form-label small mb-0"
+                        >Number of Rows</label
+                      >
                     </div>
                     <div class="col-5">
                       <input
@@ -209,7 +249,9 @@
 
                   <div class="row g-2 mb-2 align-items-center">
                     <div class="col-7">
-                      <label class="form-label small mb-0">Number of Aisles</label>
+                      <label class="form-label small mb-0"
+                        >Number of Aisles</label
+                      >
                     </div>
                     <div class="col-5">
                       <input
@@ -228,11 +270,17 @@
                   <div *ngIf="workstation.aisleConfig.custom_gaps.length > 0">
                     <h6 class="text-primary small mt-3 mb-2">Aisle Gaps</h6>
                     <div
-                      *ngFor="let gap of workstation.aisleConfig.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
+                      *ngFor="
+                        let gap of workstation.aisleConfig.custom_gaps;
+                        let j = index;
+                        taisleBy: taisleByGapIndex
+                      "
                       class="row g-2 mb-2 align-items-center"
                     >
                       <div class="col-5">
-                        <label class="form-label small mb-0">Gap {{ j + 1 }}-{{ j + 2 }}</label>
+                        <label class="form-label small mb-0"
+                          >Gap {{ j + 1 }}-{{ j + 2 }}</label
+                        >
                       </div>
                       <div class="col-4">
                         <input
@@ -244,7 +292,9 @@
                         />
                       </div>
                       <div class="col-3">
-                        <span class="form-control-plaintext form-control-sm text-muted">
+                        <span
+                          class="form-control-plaintext form-control-sm text-muted"
+                        >
                           {{ workstation.aisleConfig.wall_gap_unit }}
                         </span>
                       </div>
@@ -371,7 +421,10 @@
                       </h6>
                       <div>
                         <span class="badge bg-success me-2">
-                          {{ getTotalPalletsWeight(workstation) | number : "1.0-0" }}
+                          {{
+                            getTotalPalletsWeight(workstation)
+                              | number : "1.0-0"
+                          }}
                           kg
                         </span>
                         <button
@@ -384,9 +437,16 @@
                     </div>
 
                     <!-- Pallet List -->
-                    <div class="pallets-list" *ngIf="workstation.pallets.length > 0">
+                    <div
+                      class="pallets-list"
+                      *ngIf="workstation.pallets.length > 0"
+                    >
                       <app-pallet-config
-                        *ngFor="let pallet of workstation.pallets; let pIndex = index; taisleBy: taisleByPalletIndex"
+                        *ngFor="
+                          let pallet of workstation.pallets;
+                          let pIndex = index;
+                          taisleBy: taisleByPalletIndex
+                        "
                         [pallet]="pallet"
                         [palletIndex]="pIndex"
                         [workstationIndex]="i"

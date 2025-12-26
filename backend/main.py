@@ -126,6 +126,7 @@ class Dimensions(BaseModel):
     length: float
     width: float
     height: float
+    height_safety_margin: float
     unit: str = "cm"
 
 class Position(BaseModel):

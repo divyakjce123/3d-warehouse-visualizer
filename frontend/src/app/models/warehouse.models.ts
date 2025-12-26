@@ -3,6 +3,7 @@ export interface Dimensions {
   length: number;
   width: number;
   height: number;
+  height_safety_margin: number;
   unit: string;
 }
 
@@ -86,6 +87,7 @@ export interface WorkstationData {
 
 export interface LayoutData {
   warehouse_dimensions?: {
+    height_safety_margin: number;
     width: number;
     length: number;
     height: number;
