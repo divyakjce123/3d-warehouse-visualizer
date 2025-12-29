@@ -40,6 +40,13 @@ export class WarehouseService {
       );
   }
 
+  getWarehouseFromDb(warehouseId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/warehouse/db/${warehouseId}`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred!';
     if (error.error instanceof ErrorEvent) {
@@ -55,4 +62,6 @@ export class WarehouseService {
     console.error(errorMessage);
     return throwError(() => new Error(errorMessage));
   }
+
+  
 }

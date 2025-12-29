@@ -45,12 +45,12 @@ class WarehouseCalculator:
         for i, ws_conf in enumerate(config['workstation_configs']):
             ws_x = i * (workstation_width + wg)
 
-            aisle_width = self.to_cm(
-                ws_conf['aisle_width'],
-                ws_conf.get('aisle_width_unit', 'cm')
+            aisle_space = self.to_cm(
+                ws_conf['aisle_space'],
+                ws_conf.get('aisle_space_unit', 'cm')
             )
 
-            side_width = (workstation_width - aisle_width) / 2
+            side_width = (workstation_width - aisle_space) / 2
 
             aisles = []
 
@@ -60,7 +60,7 @@ class WarehouseCalculator:
                 "type": "central_aisle",
                 "position": {"x": ws_x + side_width, "y": 0, "z": 0},
                 "dimensions": {
-                    "width": aisle_width,
+                    "width": aisle_space,
                     "length": L,
                     "height": workstation_height
                 }
@@ -79,7 +79,7 @@ class WarehouseCalculator:
 
             aisles += self._process_side(
                 ws_conf['right_side_config'],
-                ws_x + side_width + aisle_width,
+                ws_x + side_width + aisle_space,
                 side_width,
                 L,
                 workstation_height,
@@ -131,15 +131,15 @@ class WarehouseCalculator:
         rows = cfg['num_rows']
         floors = cfg['num_floors']
         num_aisles = cfg['num_aisles']
-        depth = cfg['depth']
+        deep = cfg['deep']
 
         # ✅ TRUE STORAGE AISLE COUNT
-        n = num_aisles * depth
+        n = num_aisles * deep
 
         custom_gaps = [self.to_cm(g, cfg['wall_gap_unit']) for g in cfg.get('custom_gaps', [])]
         custom_gaps += [0.0] * (n - 1 - len(custom_gaps))
 
-        aisle_width = (avail_w - sum(custom_gaps)) / n
+        aisle_space = (avail_w - sum(custom_gaps)) / n
         aisle_length = avail_l / rows
         aisle_height = side_height / floors
 
@@ -150,7 +150,7 @@ class WarehouseCalculator:
             current_x = start_x + gl
             aisle_no = 1
 
-            for d in range(depth):
+            for d in range(deep):
                 for a in range(num_aisles):
 
                     if aisle_no > 1:
@@ -167,7 +167,7 @@ class WarehouseCalculator:
                                 "z": f * aisle_height
                             },
                             "dimensions": {
-                                "width": aisle_width,
+                                "width": aisle_space,
                                 "length": aisle_length,
                                 "height": aisle_height
                             },
@@ -175,13 +175,13 @@ class WarehouseCalculator:
                                 "row": r + 1,
                                 "floor": f + 1,
                                 "col": aisle_no,               # ✅ GLOBAL column index (1 → n)
-                                "depth": d + 1,
+                                "deep": d + 1,
                                 "aisle": a + 1 if num_aisles > 1 else 1
                             },
                             "pallets": []
                         })
 
-                    current_x += aisle_width
+                    current_x += aisle_space
                     aisle_no += 1
 
         return aisles
@@ -193,14 +193,14 @@ class WarehouseCalculator:
                 print(f"Warning: Pallet {i} has no position information")
                 continue
             
-            # Match pallet to aisle using: side, row, floor, depth, col (global aisle index)
+            # Match pallet to aisle using: side, row, floor, deep, col (global aisle index)
             side = pos.get('side')
             row = pos.get('row')
             floor = pos.get('floor')
-            depth = pos.get('depth')
+            deep = pos.get('deep')
             col = pos.get('col')  # Global aisle column index
             
-            if not all([side, row is not None, floor is not None, depth is not None, col is not None]):
+            if not all([side, row is not None, floor is not None, deep is not None, col is not None]):
                 print(f"Warning: Pallet {i} has incomplete position: {pos}")
                 continue
                 
@@ -212,7 +212,7 @@ class WarehouseCalculator:
                 if (aisle.get('side') == side and
                     aisle['indices']['row'] == row and
                     aisle['indices']['floor'] == floor and
-                    aisle['indices']['depth'] == depth and
+                    aisle['indices']['deep'] == deep and
                     aisle['indices']['col'] == col):
                     
                     aisle['pallets'].append({
