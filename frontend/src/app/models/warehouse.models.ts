@@ -8,9 +8,11 @@ export interface Dimensions {
 }
 
 export interface Position {
-  floor: number;
-  row: number;
+  floor: number;  // Y_position (floors)
+  row: number;    // X_position (rows)
   col: number;
+  depth?: number; // Depth position
+  side?: string;  // "left" or "right"
 }
 
 export interface PalletConfig {
@@ -23,11 +25,12 @@ export interface PalletConfig {
   position: Position;
 }
 
-export interface AisleConfig {
-  num_floors: number;
-  num_rows: number;
-  num_aisles: number;
-  custom_gaps: number[];
+export interface SideAisleConfig {
+  num_floors: number;  // Y_position (floors)
+  num_rows: number;    // X_position (rows)
+  num_aisles: number;  // Number of horizontal aisles
+  depth: number;       // Number of Deep (depth dimension)
+  custom_gaps: number[];  // Gaps between aisles: (num_aisles * depth) - 1 gaps
   gap_front: number;
   gap_back: number;
   gap_left: number;
@@ -37,7 +40,10 @@ export interface AisleConfig {
 
 export interface WorkstationConfig {
   workstation_index: number;
-  aisle_config: AisleConfig;
+  aisle_width: number;  // Central aisle width (A_W)
+  aisle_width_unit: string;
+  left_side_config: SideAisleConfig;
+  right_side_config: SideAisleConfig;
   pallet_configs: PalletConfig[];
 }
 
@@ -65,17 +71,28 @@ export interface PalletData {
 }
 
 export interface AisleIndices {
-  floor: number;
-  row: number;
+  floor: number;  // Y_position (floors)
+  row: number;    // X_position (rows)
   col: number;
+  depth?: number;
+  aisle?: number;
 }
 
 export interface AisleData {
   id: string;
+  type?: string;  // "storage_aisle" or "central_aisle" or "workstation_gap"
+  side?: string;  // "left" or "right" for storage aisles
   position: { x: number; y: number; z: number };
   dimensions: { length: number; width: number; height: number };
   indices: AisleIndices;
   pallets?: PalletData[];
+}
+
+export interface WorkstationGapData {
+  id: string;
+  type: string;
+  position: { x: number; y: number; z: number };
+  dimensions: { length: number; width: number; height: number };
 }
 
 export interface WorkstationData {
@@ -92,5 +109,6 @@ export interface LayoutData {
     length: number;
     height: number;
   };
+  workstation_gaps?: WorkstationGapData[];
   workstations: WorkstationData[];
 }

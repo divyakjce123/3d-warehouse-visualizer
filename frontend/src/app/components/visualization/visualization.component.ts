@@ -455,7 +455,14 @@ export class VisualizationComponent
     // 1. Draw Warehouse Floor Outline
     this.drawFloorBoundary(mainGroup);
 
-    // 2. Draw Workstations and Aisles
+    // 2. Draw Workstation Gaps (empty space between workstations)
+    if (this.layoutData.workstation_gaps) {
+      this.layoutData.workstation_gaps.forEach((gap) => {
+        this.drawGap(mainGroup, gap);
+      });
+    }
+
+    // 3. Draw Workstations and Aisles
     if (this.layoutData.workstations) {
       this.layoutData.workstations.forEach((workstation) => {
         this.drawWorkstation(mainGroup, workstation);
@@ -518,15 +525,21 @@ export class VisualizationComponent
     const uniqueCols = new Set<number>();
     const aislesByPosition: Map<string, AisleData> = new Map();
     
-    // Collect info about all aisles
-    workstation.aisles.forEach((aisle) => {
-      uniqueFloors.add(aisle.indices.floor);
-      uniqueRows.add(aisle.indices.row);
-      uniqueCols.add(aisle.indices.col);
-      aislesByPosition.set(`${aisle.indices.floor}-${aisle.indices.row}-${aisle.indices.col}`, aisle);
+    // Collect info about storage aisles only (not central aisles or gaps)
+    const storageAisles = workstation.aisles.filter(a => a.type === 'storage_aisle');
+    
+    storageAisles.forEach((aisle) => {
+      if (aisle.indices) {
+        uniqueFloors.add(aisle.indices.floor);
+        uniqueRows.add(aisle.indices.row);
+        if (aisle.indices.col) {
+          uniqueCols.add(aisle.indices.col);
+        }
+        aislesByPosition.set(`${aisle.indices.floor}-${aisle.indices.row}-${aisle.indices.col || 0}`, aisle);
+      }
     });
     
-    // Draw each aisle in the workstation
+    // Draw all aisles in the workstation (including central aisles)
     workstation.aisles.forEach((aisle) => {
       this.drawAisle(workstationGroup, aisle);
     });
@@ -555,6 +568,18 @@ export class VisualizationComponent
       workstationLabel.position.copy(workstationLabelPos);
       workstationLabel.scale.set(180, 45, 1);
       workstationGroup.add(workstationLabel);
+      
+      // Add storage aisle information label
+      const numStorageAisles = storageAisles.length;
+      const storageInfoLabel = this.createTextSprite(`Storage Aisles: ${numStorageAisles}`, {
+        backgroundColor: '#ff9800',
+        borderColor: '#f57c00',
+        color: '#ffffff',
+        fontSize: 18
+      });
+      storageInfoLabel.position.set(workstationBounds.centerX, workstationBounds.maxY + 80, workstationBounds.maxZ + 50);
+      storageInfoLabel.scale.set(150, 35, 1);
+      workstationGroup.add(storageInfoLabel);
       
       // Add Floor Labels (on the left side)
       this.addFloorLabels(workstationGroup, workstation.aisles, workstationBounds, uniqueFloors);
@@ -607,9 +632,11 @@ export class VisualizationComponent
     const floorHeights: Map<number, number> = new Map();
     
     aisles.forEach(aisle => {
-      const floor = aisle.indices.floor;
-      if (!floorHeights.has(floor)) {
-        floorHeights.set(floor, aisle.position.z + aisle.dimensions.height / 2);
+      if (aisle.indices) {
+        const floor = aisle.indices.floor;
+        if (!floorHeights.has(floor)) {
+          floorHeights.set(floor, aisle.position.z + aisle.dimensions.height / 2);
+        }
       }
     });
     
@@ -640,9 +667,11 @@ export class VisualizationComponent
     const rowPositions: Map<number, number> = new Map();
     
     aisles.forEach(aisle => {
-      const row = aisle.indices.row;
-      if (!rowPositions.has(row)) {
-        rowPositions.set(row, aisle.position.y + aisle.dimensions.length / 2);
+      if (aisle.indices) {
+        const row = aisle.indices.row;
+        if (!rowPositions.has(row)) {
+          rowPositions.set(row, aisle.position.y + aisle.dimensions.length / 2);
+        }
       }
     });
     
@@ -673,7 +702,7 @@ export class VisualizationComponent
     const colPositions: Map<number, number> = new Map();
     
     aisles.forEach(aisle => {
-      if (aisle.indices.floor === 1) { // Only get positions from floor 1
+      if (aisle.indices && aisle.indices.floor === 1) { // Only get positions from floor 1
         const col = aisle.indices.col;
         if (!colPositions.has(col)) {
           colPositions.set(col, aisle.position.x + aisle.dimensions.width / 2);
@@ -700,6 +729,18 @@ export class VisualizationComponent
   }
 
   private drawAisle(group: THREE.Group, aisle: AisleData) {
+    const aisleType = aisle.type || 'storage_aisle';
+    
+    if (aisleType === 'central_aisle') {
+      // Draw central aisle as empty space with outline only
+      this.drawCentralAisle(group, aisle);
+    } else if (aisleType === 'storage_aisle') {
+      // Draw storage aisle with transparent blue appearance
+      this.drawStorageAisle(group, aisle);
+    }
+  }
+
+  private drawStorageAisle(group: THREE.Group, aisle: AisleData) {
     const { width, length, height } = aisle.dimensions;
     const { x, y, z } = aisle.position;
 
@@ -708,7 +749,6 @@ export class VisualizationComponent
     aisleGroup.name = `aisle-${aisle.id}`;
     
     // Position at the corner (x, y, z), then offset by half dimensions
-    // because BoxGeometry is centered at origin
     aisleGroup.position.set(
       x + width / 2,
       y + length / 2,
@@ -748,6 +788,62 @@ export class VisualizationComponent
     }
 
     group.add(aisleGroup);
+  }
+
+  private drawCentralAisle(group: THREE.Group, aisle: AisleData) {
+    const { width, length, height } = aisle.dimensions;
+    const { x, y, z } = aisle.position;
+
+    const aisleGroup = new THREE.Group();
+    aisleGroup.name = `central-aisle-${aisle.id}`;
+    
+    aisleGroup.position.set(
+      x + width / 2,
+      y + length / 2,
+      z
+    );
+
+    // Draw only outline (edges) to show empty space
+    const geometry = new THREE.BoxGeometry(width, length);
+    const edges = new THREE.EdgesGeometry(geometry);
+    const edgeMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x000000,  // Light gray for central aisle outline
+      linewidth: 2
+    });
+    const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+    aisleGroup.add(wireframe);
+
+    group.add(aisleGroup);
+  }
+
+  private drawGap(group: THREE.Group, gap: any) {
+    const { width, length, height } = gap.dimensions;
+    const { x, y, z } = gap.position;
+
+    if (width <= 0) return; // Skip zero-width gaps
+
+    const gapGroup = new THREE.Group();
+    gapGroup.name = `gap-${gap.id}`;
+    
+    gapGroup.position.set(
+      x + width / 2,
+      y + length / 2,
+      z + height / 2
+    );
+
+    // Draw only outline (edges) to show empty space
+    const geometry = new THREE.BoxGeometry(width, length, height);
+    const edges = new THREE.EdgesGeometry(geometry);
+    const edgeMaterial = new THREE.LineDashedMaterial({ 
+      color: 0x000000,  
+      gapSize: 10,
+      linewidth: 2
+    });
+    const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+    wireframe.computeLineDistances(); // Required for dashed lines
+    gapGroup.add(wireframe);
+
+    group.add(gapGroup);
   }
 
   private drawPallet(

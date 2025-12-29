@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { PalletConfig, AisleConfig } from 'src/app/models/warehouse.models';
+import { PalletConfig, SideAisleConfig } from 'src/app/models/warehouse.models';
 
 @Component({
   selector: 'app-workstation-config',
@@ -8,11 +8,11 @@ import { PalletConfig, AisleConfig } from 'src/app/models/warehouse.models';
 })
 export class WorkstationConfigComponent implements OnInit, OnChanges {
   @Input() workstationIndex: number = 0;
-  @Input() aisleConfig!: AisleConfig;
+  @Input() aisleConfig!: SideAisleConfig;
   @Input() pallets: PalletConfig[] = [];
   @Input() workstationGapUnit: string = 'cm';
   
-  @Output() aisleConfigChange = new EventEmitter<AisleConfig>();
+  @Output() aisleConfigChange = new EventEmitter<SideAisleConfig>();
   @Output() palletsChange = new EventEmitter<PalletConfig[]>();
   @Output() addPallet = new EventEmitter<void>();
   @Output() removePallet = new EventEmitter<number>();

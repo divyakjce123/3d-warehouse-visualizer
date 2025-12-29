@@ -13,6 +13,7 @@ export class PalletConfigComponent implements OnInit {
   @Input() maxFloors: number = 3;
   @Input() maxRows: number = 2;
   @Input() maxAisles: number = 4;
+  @Input() maxDepth: number = 1;
   
   @Output() palletChange = new EventEmitter<PalletConfig>();
   @Output() removePallet = new EventEmitter<void>();

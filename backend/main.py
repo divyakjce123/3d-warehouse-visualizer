@@ -130,9 +130,11 @@ class Dimensions(BaseModel):
     unit: str = "cm"
 
 class Position(BaseModel):
-    floor: int
-    row: int
-    col: int
+    floor: int  # Y_position (floors)
+    row: int    # X_position (rows)
+    col: int    # Aisle/column position
+    depth: int = 1  # Depth position (for new structure)
+    side: str = "left"  # "left" or "right" side of workstation
 
 class PalletConfig(BaseModel):
     type: str
@@ -143,11 +145,12 @@ class PalletConfig(BaseModel):
     color: str = "#8B4513"
     position: Position
 
-class AisleConfig(BaseModel):
-    num_floors: int
-    num_rows: int
-    num_aisles: int
-    custom_gaps: List[float] = []
+class SideAisleConfig(BaseModel):
+    num_floors: int  # Y_position (floors)
+    num_rows: int    # X_position (rows)
+    num_aisles: int  # Number of horizontal aisles
+    depth: int       # Number of Deep (depth dimension)
+    custom_gaps: List[float] = []  # Gaps between aisles: (num_aisles * depth) - 1 gaps
     gap_front: float
     gap_back: float
     gap_left: float
@@ -156,7 +159,10 @@ class AisleConfig(BaseModel):
 
 class WorkstationConfig(BaseModel):
     workstation_index: int
-    aisle_config: AisleConfig
+    aisle_width: float  # Central aisle width (A_W)
+    aisle_width_unit: str = "cm"
+    left_side_config: SideAisleConfig
+    right_side_config: SideAisleConfig
     pallet_configs: List[PalletConfig]
 
 class WarehouseConfig(BaseModel):

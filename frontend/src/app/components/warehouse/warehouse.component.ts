@@ -4,7 +4,7 @@ import {
   WarehouseConfig,
   LayoutData,
   PalletConfig,
-  AisleConfig,
+  SideAisleConfig,
 } from "../../models/warehouse.models";
 
 @Component({
@@ -23,7 +23,7 @@ export class WarehouseVisualizerComponent implements OnInit {
       unit: "cm",
     },
     num_workstations: 2,
-    workstation_gap: 1000,
+    workstation_gap: 100,
     workstation_gap_unit: "cm",
     workstation_configs: [],
     workstations: false
@@ -154,21 +154,33 @@ export class WarehouseVisualizerComponent implements OnInit {
   }
 
   private createDefaultWorkstation(): any {
+    const defaultSideConfig = {
+      num_floors: 4,  // Y_position (floors)
+      num_rows: 4,    // X_position (rows)
+      num_aisles: 2,  // Number of horizontal aisles
+      depth: 1,       // Number of Deep (depth dimension)
+      custom_gaps: [],
+      gap_front: 100,
+      gap_back: 100,
+      gap_left: 100,
+      gap_right: 100,
+      wall_gap_unit: "cm",
+    };
+    
     return {
-      aisleConfig: {
-        num_floors: 4,
-        num_rows: 8,
-        num_aisles: 4,
-        custom_gaps: [],
-        gap_front: 100,
-        gap_back: 100,
-        gap_left: 100,
-        gap_right: 100,
-        // Backend unit (we will always send cm)
-        wall_gap_unit: "cm",
+      aisle_width: 500,  // Central aisle width (A_W)
+      aisle_width_unit: "cm",
+      left_side_config: { ...defaultSideConfig },
+      right_side_config: { ...defaultSideConfig },
+      // UI-only wall gap values with individual units for left side
+      leftWallGaps: {
+        front: { value: 100, unit: "cm" },
+        back: { value: 100, unit: "cm" },
+        left: { value: 100, unit: "cm" },
+        right: { value: 100, unit: "cm" },
       },
-      // UI-only wall gap values with individual units
-      wallGaps: {
+      // UI-only wall gap values with individual units for right side
+      rightWallGaps: {
         front: { value: 100, unit: "cm" },
         back: { value: 100, unit: "cm" },
         left: { value: 100, unit: "cm" },
@@ -196,41 +208,70 @@ export class WarehouseVisualizerComponent implements OnInit {
 
   updateWorkstationConfigs(): void {
     this.warehouseConfig.workstation_configs = this.workstations.map((workstation, index) => {
-      const aisleConfig = workstation.aisleConfig;
-      const wallGaps = workstation.wallGaps || {
-        front: { value: aisleConfig.gap_front, unit: "cm" },
-        back: { value: aisleConfig.gap_back, unit: "cm" },
-        left: { value: aisleConfig.gap_left, unit: "cm" },
-        right: { value: aisleConfig.gap_right, unit: "cm" },
+      // Convert central aisle width to cm
+      const aisleWidthCm =
+        (workstation.aisle_width || 200) *
+        this.getUnitConversionFactor(workstation.aisle_width_unit || "cm");
+
+      // Convert left side wall gaps to cm
+      const leftGapFrontCm =
+        (workstation.leftWallGaps?.front?.value || 0) *
+        this.getUnitConversionFactor(workstation.leftWallGaps?.front?.unit || "cm");
+      const leftGapBackCm =
+        (workstation.leftWallGaps?.back?.value || 0) *
+        this.getUnitConversionFactor(workstation.leftWallGaps?.back?.unit || "cm");
+      const leftGapLeftCm =
+        (workstation.leftWallGaps?.left?.value || 0) *
+        this.getUnitConversionFactor(workstation.leftWallGaps?.left?.unit || "cm");
+      const leftGapRightCm =
+        (workstation.leftWallGaps?.right?.value || 0) *
+        this.getUnitConversionFactor(workstation.leftWallGaps?.right?.unit || "cm");
+
+      // Convert right side wall gaps to cm
+      const rightGapFrontCm =
+        (workstation.rightWallGaps?.front?.value || 0) *
+        this.getUnitConversionFactor(workstation.rightWallGaps?.front?.unit || "cm");
+      const rightGapBackCm =
+        (workstation.rightWallGaps?.back?.value || 0) *
+        this.getUnitConversionFactor(workstation.rightWallGaps?.back?.unit || "cm");
+      const rightGapLeftCm =
+        (workstation.rightWallGaps?.left?.value || 0) *
+        this.getUnitConversionFactor(workstation.rightWallGaps?.left?.unit || "cm");
+      const rightGapRightCm =
+        (workstation.rightWallGaps?.right?.value || 0) *
+        this.getUnitConversionFactor(workstation.rightWallGaps?.right?.unit || "cm");
+
+      // Convert custom gaps to cm
+      const convertGaps = (gaps: number[], unit: string) => {
+        return gaps.map(g => g * this.getUnitConversionFactor(unit || "cm"));
       };
 
-      // Convert each wall gap to cm for backend
-      const gapFrontCm =
-        (wallGaps.front?.value || 0) *
-        this.getUnitConversionFactor(wallGaps.front?.unit || "cm");
-      const gapBackCm =
-        (wallGaps.back?.value || 0) *
-        this.getUnitConversionFactor(wallGaps.back?.unit || "cm");
-      const gapLeftCm =
-        (wallGaps.left?.value || 0) *
-        this.getUnitConversionFactor(wallGaps.left?.unit || "cm");
-      const gapRightCm =
-        (wallGaps.right?.value || 0) *
-        this.getUnitConversionFactor(wallGaps.right?.unit || "cm");
+      const leftSideConfig: any = {
+        ...workstation.left_side_config,
+        gap_front: leftGapFrontCm,
+        gap_back: leftGapBackCm,
+        gap_left: leftGapLeftCm,
+        gap_right: leftGapRightCm,
+        custom_gaps: convertGaps(workstation.left_side_config.custom_gaps || [], workstation.left_side_config.wall_gap_unit || "cm"),
+        wall_gap_unit: "cm",
+      };
 
-      const aisleConfigForBackend: AisleConfig = {
-        ...aisleConfig,
-        gap_front: gapFrontCm,
-        gap_back: gapBackCm,
-        gap_left: gapLeftCm,
-        gap_right: gapRightCm,
-        // All gaps are now expressed in cm for backend
+      const rightSideConfig: any = {
+        ...workstation.right_side_config,
+        gap_front: rightGapFrontCm,
+        gap_back: rightGapBackCm,
+        gap_left: rightGapLeftCm,
+        gap_right: rightGapRightCm,
+        custom_gaps: convertGaps(workstation.right_side_config.custom_gaps || [], workstation.right_side_config.wall_gap_unit || "cm"),
         wall_gap_unit: "cm",
       };
 
       return {
         workstation_index: index,
-        aisle_config: aisleConfigForBackend,
+        aisle_width: aisleWidthCm,
+        aisle_width_unit: "cm",
+        left_side_config: leftSideConfig,
+        right_side_config: rightSideConfig,
         pallet_configs: workstation.pallets.map((pallet: any) => ({
           ...pallet,
           color: this.palletColors[pallet.type] || "#8B4513",
@@ -247,7 +288,13 @@ export class WarehouseVisualizerComponent implements OnInit {
       width_cm: 100,
       height_cm: 15,
       color: this.palletColors["wooden"],
-      position: { floor: 1, row: 1, col: 1 },
+      position: { 
+        floor: 1,  // Y_position (floors)
+        row: 1,    // X_position (rows)
+        col: 1,
+        depth: 1,
+        side: "left"
+      },
     };
 
     if (!this.workstations[workstationIndex].pallets) {
@@ -264,17 +311,29 @@ export class WarehouseVisualizerComponent implements OnInit {
     }
   }
 
-  updateAisleGaps(workstationIndex: number): void {
-    const numAisles = this.workstations[workstationIndex].aisleConfig.num_aisles;
-    const currentGaps = this.workstations[workstationIndex].aisleConfig.custom_gaps || [];
-    const newGaps = Array(numAisles - 1).fill(500);
+  updateAisleGaps(workstationIndex: number, side: 'left' | 'right'): void {
+    const workstation = this.workstations[workstationIndex];
+    const sideConfig = side === 'left' ? workstation.left_side_config : workstation.right_side_config;
+    const numAisles = sideConfig.num_aisles;
+    const depth = sideConfig.depth;
+    
+    // Number of gaps = (num_aisles × depth) - 1
+    const requiredGaps = (numAisles * depth) - 1;
+    const currentGaps = sideConfig.custom_gaps || [];
+    const newGaps = Array(requiredGaps).fill(50); // Default 50cm gap
 
+    // Preserve existing gap values
     for (let i = 0; i < Math.min(currentGaps.length, newGaps.length); i++) {
       newGaps[i] = currentGaps[i];
     }
 
-    this.workstations[workstationIndex].aisleConfig.custom_gaps = newGaps;
+    sideConfig.custom_gaps = newGaps;
     this.updateWorkstationConfigs();
+  }
+
+  onSideConfigChange(workstationIndex: number, side: 'left' | 'right'): void {
+    // Update gaps when num_aisles or depth changes
+    this.updateAisleGaps(workstationIndex, side);
   }
 
   getTotalPallets(): number {
@@ -376,5 +435,35 @@ export class WarehouseVisualizerComponent implements OnInit {
   onPalletClicked(pallet: PalletConfig): void {
     console.log('Pallet clicked:', pallet);
     // You can add more functionality here, like showing pallet details
+  }
+
+  // Helper methods for pallet configuration limits
+  getMaxFloors(workstation: any): number {
+    return Math.max(
+      workstation.left_side_config?.num_floors || 1,
+      workstation.right_side_config?.num_floors || 1
+    );
+  }
+
+  getMaxRows(workstation: any): number {
+    return Math.max(
+      workstation.left_side_config?.num_rows || 1,
+      workstation.right_side_config?.num_rows || 1
+    );
+  }
+
+  getMaxAisles(workstation: any): number {
+    const leftTotal = (workstation.left_side_config?.num_aisles || 1) * 
+                      (workstation.left_side_config?.depth || 1);
+    const rightTotal = (workstation.right_side_config?.num_aisles || 1) * 
+                       (workstation.right_side_config?.depth || 1);
+    return Math.max(leftTotal, rightTotal);
+  }
+
+  getMaxDepth(workstation: any): number {
+    return Math.max(
+      workstation.left_side_config?.depth || 1,
+      workstation.right_side_config?.depth || 1
+    );
   }
 }

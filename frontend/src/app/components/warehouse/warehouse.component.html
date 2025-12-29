@@ -103,7 +103,7 @@
           <!-- Height Safety Margin -->
           <div class="row g-2 align-items-center">
             <div class="col-3">
-              <label class="form-label small mb-0">Height Safety Margin</label>
+              <label class="form-label small mb-0">Safety Margin</label>
             </div>
             <div class="col-5">
               <input
@@ -208,206 +208,435 @@
                 class="accordion-collapse collapse show"
               >
                 <div class="accordion-body">
-                  <!-- Aisles Configuration -->
-                  <h6 class="text-primary small mb-2">Aisles Configuration</h6>
-
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-7">
-                      <label class="form-label small mb-0"
-                        >Number of Floors</label
-                      >
+                  <!-- Central Aisle Width -->
+                  <h6 class="text-primary small mb-2">Aisle Configuration</h6>
+                  <div class="row g-2 mb-3 align-items-center">
+                    <div class="col-4">
+                      <label class="form-label small mb-0">Aisle Space</label>
                     </div>
-                    <div class="col-5">
+                    <div class="col-4">
                       <input
                         type="number"
                         class="form-control form-control-sm"
-                        [(ngModel)]="workstation.aisleConfig.num_floors"
+                        [(ngModel)]="workstation.aisle_width"
                         min="1"
-                        max="20"
-                        step="1"
+                        step="any"
                       />
                     </div>
-                  </div>
-
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-7">
-                      <label class="form-label small mb-0"
-                        >Number of Rows</label
+                    <div class="col-4">
+                      <select
+                        class="form-select form-select-sm"
+                        [(ngModel)]="workstation.aisle_width_unit"
                       >
-                    </div>
-                    <div class="col-5">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.aisleConfig.num_rows"
-                        min="1"
-                        max="50"
-                        step="1"
-                      />
+                        <option value="cm">cm</option>
+                        <option value="m">m</option>
+                        <option value="mm">mm</option>
+                        <option value="ft">ft</option>
+                        <option value="in">in</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-7">
-                      <label class="form-label small mb-0"
-                        >Number of Aisles</label
+                  <!-- Helper method to render side configuration - we'll duplicate for left and right -->
+                  <!-- Left Side Configuration -->
+                  <div class="border rounded p-2 mb-3 bg-light">
+                    <h6 class="text-info small mb-2">Left Side Configuration</h6>
+                    
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Floors (Y_position)</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.left_side_config.num_floors"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'left')"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Rows (X_position)</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.left_side_config.num_rows"
+                          min="1"
+                          max="50"
+                          step="1"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Aisles</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.left_side_config.num_aisles"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'left')"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Deep </label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.left_side_config.depth"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'left')"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="alert alert-info py-2 px-2 mb-2 small">
+                      <strong>Total Locations:</strong> 
+                      {{ workstation.left_side_config.num_rows }} × {{ workstation.left_side_config.num_floors }} × {{ workstation.left_side_config.depth }} × {{ workstation.left_side_config.num_aisles }} = 
+                      {{ workstation.left_side_config.num_rows * workstation.left_side_config.num_floors * workstation.left_side_config.depth * workstation.left_side_config.num_aisles }}
+                    </div>
+
+                    <div *ngIf="workstation.left_side_config.custom_gaps.length > 0">
+                      <h6 class="text-info small mt-2 mb-1">Aisle Gaps</h6>
+                      <div
+                        *ngFor="let gap of workstation.left_side_config.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
+                        class="row g-1 mb-1 align-items-center"
                       >
+                        <div class="col-5">
+                          <label class="form-label small mb-0">Gap {{ j + 1 }}-{{ j + 2 }}</label>
+                        </div>
+                        <div class="col-4">
+                          <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            [(ngModel)]="workstation.left_side_config.custom_gaps[j]"
+                            min="0"
+                            step="any"
+                          />
+                        </div>
+                        <div class="col-3">
+                          <span class="form-control-plaintext form-control-sm text-muted">
+                            {{ workstation.left_side_config.wall_gap_unit }}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="col-5">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.aisleConfig.num_aisles"
-                        min="1"
-                        max="20"
-                        step="1"
-                        (blur)="updateAisleGaps(i)"
-                      />
-                    </div>
-                  </div>
 
-                  <!-- Aisle Gaps - Only show if more than 1 aisle -->
-                  <div *ngIf="workstation.aisleConfig.custom_gaps.length > 0">
-                    <h6 class="text-primary small mt-3 mb-2">Aisle Gaps</h6>
-                    <div
-                      *ngFor="
-                        let gap of workstation.aisleConfig.custom_gaps;
-                        let j = index;
-                        taisleBy: taisleByGapIndex
-                      "
-                      class="row g-2 mb-2 align-items-center"
-                    >
-                      <div class="col-5">
-                        <label class="form-label small mb-0"
-                          >Gap {{ j + 1 }}-{{ j + 2 }}</label
-                        >
+                    <h6 class="text-info small mt-2 mb-1">Wall Gaps</h6>
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Front Gap</label>
                       </div>
                       <div class="col-4">
                         <input
                           type="number"
                           class="form-control form-control-sm"
-                          [(ngModel)]="workstation.aisleConfig.custom_gaps[j]"
+                          [(ngModel)]="workstation.leftWallGaps.front.value"
                           min="0"
                           step="any"
                         />
                       </div>
-                      <div class="col-3">
-                        <span
-                          class="form-control-plaintext form-control-sm text-muted"
-                        >
-                          {{ workstation.aisleConfig.wall_gap_unit }}
-                        </span>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.front.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Back Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.leftWallGaps.back.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.back.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Left Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.leftWallGaps.left.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.left.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-2 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Right Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.leftWallGaps.right.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.right.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Wall Gaps -->
-                  <h6 class="text-primary small mt-3 mb-2">Wall Gaps</h6>
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-5">
-                      <label class="form-label small mb-0">Front Gap</label>
+                  <!-- Right Side Configuration -->
+                  <div class="border rounded p-2 mb-3 bg-light">
+                    <h6 class="text-info small mb-2">Right Side Configuration</h6>
+                    
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Floors (Y_position)</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.right_side_config.num_floors"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'right')"
+                        />
+                      </div>
                     </div>
-                    <div class="col-4">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.wallGaps.front.value"
-                        min="0"
-                        step="any"
-                      />
-                    </div>
-                    <div class="col-3">
-                      <select
-                        class="form-select form-select-sm"
-                        [(ngModel)]="workstation.wallGaps.front.unit"
-                      >
-                        <option value="cm">cm</option>
-                        <option value="m">m</option>
-                        <option value="mm">mm</option>
-                        <option value="ft">ft</option>
-                        <option value="in">in</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-5">
-                      <label class="form-label small mb-0">Back Gap</label>
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Rows (X_position)</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.right_side_config.num_rows"
+                          min="1"
+                          max="50"
+                          step="1"
+                        />
+                      </div>
                     </div>
-                    <div class="col-4">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.wallGaps.back.value"
-                        min="0"
-                        step="any"
-                      />
-                    </div>
-                    <div class="col-3">
-                      <select
-                        class="form-select form-select-sm"
-                        [(ngModel)]="workstation.wallGaps.back.unit"
-                      >
-                        <option value="cm">cm</option>
-                        <option value="m">m</option>
-                        <option value="mm">mm</option>
-                        <option value="ft">ft</option>
-                        <option value="in">in</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div class="row g-2 mb-2 align-items-center">
-                    <div class="col-5">
-                      <label class="form-label small mb-0">Left Gap</label>
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Aisles</label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.right_side_config.num_aisles"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'right')"
+                        />
+                      </div>
                     </div>
-                    <div class="col-4">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.wallGaps.left.value"
-                        min="0"
-                        step="any"
-                      />
-                    </div>
-                    <div class="col-3">
-                      <select
-                        class="form-select form-select-sm"
-                        [(ngModel)]="workstation.wallGaps.left.unit"
-                      >
-                        <option value="cm">cm</option>
-                        <option value="m">m</option>
-                        <option value="mm">mm</option>
-                        <option value="ft">ft</option>
-                        <option value="in">in</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div class="row g-2 mb-3 align-items-center">
-                    <div class="col-5">
-                      <label class="form-label small mb-0">Right Gap</label>
+                    <div class="row g-2 mb-2 align-items-center">
+                      <div class="col-6">
+                        <label class="form-label small mb-0">Number of Deep </label>
+                      </div>
+                      <div class="col-6">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.right_side_config.depth"
+                          min="1"
+                          max="20"
+                          step="1"
+                          (blur)="onSideConfigChange(i, 'right')"
+                        />
+                      </div>
                     </div>
-                    <div class="col-4">
-                      <input
-                        type="number"
-                        class="form-control form-control-sm"
-                        [(ngModel)]="workstation.wallGaps.right.value"
-                        min="0"
-                        step="any"
-                      />
+
+                    <div class="alert alert-info py-2 px-2 mb-2 small">
+                      <strong>Total Locations:</strong> 
+                      {{ workstation.right_side_config.num_rows }} × {{ workstation.right_side_config.num_floors }} × {{ workstation.right_side_config.depth }} × {{ workstation.right_side_config.num_aisles }} = 
+                      {{ workstation.right_side_config.num_rows * workstation.right_side_config.num_floors * workstation.right_side_config.depth * workstation.right_side_config.num_aisles }}
                     </div>
-                    <div class="col-3">
-                      <select
-                        class="form-select form-select-sm"
-                        [(ngModel)]="workstation.wallGaps.right.unit"
+
+                    <div *ngIf="workstation.right_side_config.custom_gaps.length > 0">
+                      <h6 class="text-info small mt-2 mb-1">Aisle Gaps</h6>
+                      <div
+                        *ngFor="let gap of workstation.right_side_config.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
+                        class="row g-1 mb-1 align-items-center"
                       >
-                        <option value="cm">cm</option>
-                        <option value="m">m</option>
-                        <option value="mm">mm</option>
-                        <option value="ft">ft</option>
-                        <option value="in">in</option>
-                      </select>
+                        <div class="col-5">
+                          <label class="form-label small mb-0">Gap {{ j + 1 }}-{{ j + 2 }}</label>
+                        </div>
+                        <div class="col-4">
+                          <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            [(ngModel)]="workstation.right_side_config.custom_gaps[j]"
+                            min="0"
+                            step="any"
+                          />
+                        </div>
+                        <div class="col-3">
+                          <span class="form-control-plaintext form-control-sm text-muted">
+                            {{ workstation.right_side_config.wall_gap_unit }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h6 class="text-info small mt-2 mb-1">Wall Gaps</h6>
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Front Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.rightWallGaps.front.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.front.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Back Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.rightWallGaps.back.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.back.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-1 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Left Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.rightWallGaps.left.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.left.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row g-1 mb-2 align-items-center">
+                      <div class="col-4">
+                        <label class="form-label small mb-0">Right Gap</label>
+                      </div>
+                      <div class="col-4">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="workstation.rightWallGaps.right.value"
+                          min="0"
+                          step="any"
+                        />
+                      </div>
+                      <div class="col-4">
+                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.right.unit">
+                          <option value="cm">cm</option>
+                          <option value="m">m</option>
+                          <option value="mm">mm</option>
+                          <option value="ft">ft</option>
+                          <option value="in">in</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -450,9 +679,10 @@
                         [pallet]="pallet"
                         [palletIndex]="pIndex"
                         [workstationIndex]="i"
-                        [maxFloors]="workstation.aisleConfig.num_floors"
-                        [maxRows]="workstation.aisleConfig.num_rows"
-                        [maxAisles]="workstation.aisleConfig.num_aisles"
+                        [maxFloors]="getMaxFloors(workstation)"
+                        [maxRows]="getMaxRows(workstation)"
+                        [maxAisles]="getMaxAisles(workstation)"
+                        [maxDepth]="getMaxDepth(workstation)"
                         (palletChange)="onPalletChange(i, pIndex, $event)"
                         (removePallet)="removePallet(i, pIndex)"
                       >
