@@ -20,6 +20,13 @@ class WarehouseCalculator:
             return 0.0
 
     def create_warehouse_layout(self, config):
+        # Debug: Print pallet configs structure
+        for i, ws_conf in enumerate(config['workstation_configs']):
+            pallets = ws_conf.get('pallet_configs', [])
+            print(f"\nWorkstation {i} has {len(pallets)} pallets")
+            for j, p in enumerate(pallets):
+                print(f"  Pallet {j}: type={p.get('type')}, position={p.get('position', {})}")
+        
         wh = config['warehouse_dimensions']
 
         W = self.to_cm(wh['width'], wh['unit'])
@@ -167,9 +174,9 @@ class WarehouseCalculator:
                             "indices": {
                                 "row": r + 1,
                                 "floor": f + 1,
-                                "aisle_no": aisle_no,          # ✅ GLOBAL (1 → n)
+                                "col": aisle_no,               # ✅ GLOBAL column index (1 → n)
                                 "depth": d + 1,
-                                "aisle_in_depth": a + 1
+                                "aisle": a + 1 if num_aisles > 1 else 1
                             },
                             "pallets": []
                         })
@@ -180,20 +187,41 @@ class WarehouseCalculator:
         return aisles
 
     def _assign_pallets(self, pallets, aisles):
-        for p in pallets:
-            pos = p['position']
+        for i, p in enumerate(pallets):
+            pos = p.get('position', {})
+            if not pos:
+                print(f"Warning: Pallet {i} has no position information")
+                continue
+            
+            # Match pallet to aisle using: side, row, floor, depth, col (global aisle index)
+            side = pos.get('side')
+            row = pos.get('row')
+            floor = pos.get('floor')
+            depth = pos.get('depth')
+            col = pos.get('col')  # Global aisle column index
+            
+            if not all([side, row is not None, floor is not None, depth is not None, col is not None]):
+                print(f"Warning: Pallet {i} has incomplete position: {pos}")
+                continue
+                
             for aisle in aisles:
                 if aisle['type'] != 'storage_aisle':
                     continue
-                if (
-                    aisle['side'] == pos['side'] and
-                    aisle['indices']['row'] == pos['row'] and
-                    aisle['indices']['floor'] == pos['floor'] and
-                    aisle['indices']['aisle_no'] == pos['aisle_no']
-                ):
+                    
+                # Match on all indices
+                if (aisle.get('side') == side and
+                    aisle['indices']['row'] == row and
+                    aisle['indices']['floor'] == floor and
+                    aisle['indices']['depth'] == depth and
+                    aisle['indices']['col'] == col):
+                    
                     aisle['pallets'].append({
-                        "type": p['type'],
+                        "type": p.get('type', 'wooden'),
                         "color": p.get('color', '#8B4513'),
-                        "dims": p.get('dims', {})
+                        "dims": {
+                            "length": p.get('length_cm', 0),
+                            "width": p.get('width_cm', 0),
+                            "height": p.get('height_cm', 0)
+                        }
                     })
                     break

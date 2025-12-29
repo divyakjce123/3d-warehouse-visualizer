@@ -132,10 +132,15 @@ export class PalletConfigComponent implements OnInit {
   }
 
   getPositionLabel(): string {
-    return `Floor ${this.pallet.position.floor}, Row ${this.pallet.position.row}, Aisle ${this.pallet.position.col}`;
+    return `Side ${this.pallet.position.side}, Floor ${this.pallet.position.floor}, Row ${this.pallet.position.row}, Aisle ${this.pallet.position.col}, Depth ${this.pallet.position.depth }`;
   }
 
   // Generate floor options based on max floors
+
+  getSideOptions(): string[] {
+    return ['left', 'right'];
+  }
+
   getFloorOptions(): number[] {
     return Array.from({ length: this.maxFloors }, (_, i) => i + 1);
   }
@@ -148,6 +153,10 @@ export class PalletConfigComponent implements OnInit {
   // Generate aisle options based on max aisles
   getAisleOptions(): number[] {
     return Array.from({ length: this.maxAisles }, (_, i) => i + 1);
+  }
+
+  getDepthOptions(): number[] {
+    return Array.from({ length: this.maxDepth }, (_, i) => i + 1);
   }
 
   onUnitChange(field: string, unit: string): void {
