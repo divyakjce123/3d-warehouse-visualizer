@@ -7,6 +7,25 @@ import { PalletConfig, SideAisleConfig } from 'src/app/models/warehouse.models';
   styleUrls: ['./workstation-config.component.css']
 })
 export class WorkstationConfigComponent implements OnInit, OnChanges {
+getMaxDepth(arg0: any): number {
+throw new Error('Method not implemented.');
+}
+getMaxAisles(arg0: any): number {
+throw new Error('Method not implemented.');
+}
+getMaxRows(arg0: any): number {
+throw new Error('Method not implemented.');
+}
+getMaxFloors(arg0: any): number {
+throw new Error('Method not implemented.');
+}
+onSideConfigChange(arg0: string) {
+throw new Error('Method not implemented.');
+}
+workstation: any;
+getWorkstationPalletsCount() {
+throw new Error('Method not implemented.');
+}
   @Input() workstationIndex: number = 0;
   @Input() aisleConfig!: SideAisleConfig;
   @Input() pallets: PalletConfig[] = [];
@@ -67,7 +86,7 @@ export class WorkstationConfigComponent implements OnInit, OnChanges {
     this.updateAisleGaps.emit();
   }
 
-  onPalletsChange(): void {
+  onPalletsChange(index?: number, event?: any): void {
     this.palletsChange.emit(this.pallets);
   }
 

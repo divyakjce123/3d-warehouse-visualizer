@@ -40,8 +40,8 @@ export interface SideAisleConfig {
 
 export interface WorkstationConfig {
   workstation_index: number;
-  aisle_space: number;  // Central aisle width (A_W)
-  aisle_space_unit: string;
+  aisle_width: number;  // Central aisle width (A_W)
+  aisle_width_unit: string;
   left_side_config: SideAisleConfig;
   right_side_config: SideAisleConfig;
   pallet_configs: PalletConfig[];

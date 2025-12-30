@@ -240,11 +240,15 @@
                   <!-- Helper method to render side configuration - we'll duplicate for left and right -->
                   <!-- Left Side Configuration -->
                   <div class="border rounded p-2 mb-3 bg-light">
-                    <h6 class="text-info small mb-2">Left Side Configuration</h6>
-                    
+                    <h6 class="text-info small mb-2">
+                      Left Side Configuration
+                    </h6>
+
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Floors (Y_position)</label>
+                        <label class="form-label small mb-0"
+                          >Number of Floors (Y_position)</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -261,7 +265,9 @@
 
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Rows (X_position)</label>
+                        <label class="form-label small mb-0"
+                          >Number of Rows (X_position)</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -277,7 +283,9 @@
 
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Aisles</label>
+                        <label class="form-label small mb-0"
+                          >Number of Aisles</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -292,55 +300,152 @@
                       </div>
                     </div>
 
-                    <div class="row g-2 mb-2 align-items-center">
-                      <div class="col-6">
-                        <label class="form-label small mb-0">Number of Deep </label>
-                      </div>
-                      <div class="col-6">
-                        <input
-                          type="number"
-                          class="form-control form-control-sm"
-                          [(ngModel)]="workstation.left_side_config.depth"
-                          min="1"
-                          max="20"
-                          step="1"
-                          (blur)="onSideConfigChange(i, 'left')"
-                        />
+                    <!-- Dynamic Aisle Configuration - Appears when num_aisles > 0 -->
+                    <div *ngIf="workstation.left_side_config.num_aisles > 0">
+                      <div class="accordion" id="leftAislesAccordion{{ i }}">
+                        <div class="accordion-item">
+                          <h2 class="accordion-header">
+                            <button
+                              class="accordion-button"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              [attr.data-bs-target]="'#leftAislesCollapse' + i"
+                            >
+                              Aisle Configuration
+                            </button>
+                          </h2>
+                          <div
+                            [id]="'leftAislesCollapse' + i"
+                            class="accordion-collapse collapse show"
+                          >
+                            <div class="accordion-body p-2">
+                              <!-- Number of Deep -->
+                              <div class="row g-2 mb-3 align-items-center">
+                                <div class="col-6">
+                                  <label class="form-label small mb-0"
+                                    >Number of Deep</label
+                                  >
+                                </div>
+                                <div class="col-6">
+                                  <input
+                                    type="number"
+                                    class="form-control form-control-sm"
+                                    [(ngModel)]="
+                                      workstation.left_side_config.depth
+                                    "
+                                    min="1"
+                                    max="20"
+                                    step="1"
+                                    (blur)="onSideConfigChange(i, 'left')"
+                                  />
+                                </div>
+                              </div>
+
+                              <!-- Dynamic Deep Gaps - Appears when depth > 1 -->
+                              <div
+                                *ngIf="workstation.left_side_config.depth > 1"
+                              >
+                                <h6 class="text-info small mt-2 mb-1">
+                                  Deep Gaps
+                                </h6>
+                                <div
+                                  *ngFor="
+                                    let gapIndex of getDeepGapArray(
+                                      workstation.left_side_config.depth
+                                    );
+                                    let j = index
+                                  "
+                                  class="row g-1 mb-1 align-items-center"
+                                >
+                                  <div class="col-5">
+                                    <label class="form-label small mb-0"
+                                      >Gap {{ j + 1 }}-{{ j + 2 }}</label
+                                    >
+                                  </div>
+                                  <div class="col-4">
+                                    <input
+                                      type="number"
+                                      class="form-control form-control-sm"
+                                      [(ngModel)]="
+                                        workstation.left_side_config.deep_gaps[
+                                          j
+                                        ]
+                                      "
+                                      min="0"
+                                      step="any"
+                                    />
+                                  </div>
+                                  <div class="col-3">
+                                    <span
+                                      class="form-control-plaintext form-control-sm text-muted"
+                                    >
+                                      {{
+                                        workstation.left_side_config
+                                          .wall_gap_unit
+                                      }}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div
+                                class="alert alert-info py-2 px-2 mb-0 small"
+                              >
+                                <strong>Total Locations:</strong>
+                                {{ workstation.left_side_config.num_rows }} ×
+                                {{ workstation.left_side_config.num_floors }} ×
+                                {{ workstation.left_side_config.depth }} =
+                                {{
+                                  workstation.left_side_config.num_rows *
+                                    workstation.left_side_config.num_floors *
+                                    workstation.left_side_config.depth
+                                }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div class="alert alert-info py-2 px-2 mb-2 small">
-                      <strong>Total Locations:</strong> 
-                      {{ workstation.left_side_config.num_rows }} × {{ workstation.left_side_config.num_floors }} × {{ workstation.left_side_config.depth }} × {{ workstation.left_side_config.num_aisles }} = 
-                      {{ workstation.left_side_config.num_rows * workstation.left_side_config.num_floors * workstation.left_side_config.depth * workstation.left_side_config.num_aisles }}
-                    </div>
-
-                    <div *ngIf="workstation.left_side_config.custom_gaps.length > 0">
+                    <!-- Aisle Gaps - Appears when num_aisles > 1 -->
+                    <div *ngIf="workstation.left_side_config.num_aisles > 1">
                       <h6 class="text-info small mt-2 mb-1">Aisle Gaps</h6>
                       <div
-                        *ngFor="let gap of workstation.left_side_config.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
+                        *ngFor="
+                          let gapIndex of getAisleGapArray(
+                            workstation.left_side_config.num_aisles
+                          );
+                          let j = index
+                        "
                         class="row g-1 mb-1 align-items-center"
                       >
                         <div class="col-5">
-                          <label class="form-label small mb-0">Gap {{ j + 1 }}-{{ j + 2 }}</label>
+                          <label class="form-label small mb-0"
+                            >Gap {{ j + 1 }}-{{ j + 2 }}</label
+                          >
                         </div>
                         <div class="col-4">
                           <input
                             type="number"
                             class="form-control form-control-sm"
-                            [(ngModel)]="workstation.left_side_config.custom_gaps[j]"
+                            [(ngModel)]="
+                              workstation.left_side_config.aisle_gaps[j]
+                            "
                             min="0"
                             step="any"
                           />
                         </div>
                         <div class="col-3">
-                          <span class="form-control-plaintext form-control-sm text-muted">
+                          <span
+                            class="form-control-plaintext form-control-sm text-muted"
+                          >
                             {{ workstation.left_side_config.wall_gap_unit }}
                           </span>
                         </div>
                       </div>
                     </div>
 
+                    <!-- Wall Gaps -->
                     <h6 class="text-info small mt-2 mb-1">Wall Gaps</h6>
                     <div class="row g-1 mb-1 align-items-center">
                       <div class="col-4">
@@ -356,7 +461,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.front.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.leftWallGaps.front.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -366,6 +474,7 @@
                       </div>
                     </div>
 
+                    <!-- Rest of wall gaps remain the same -->
                     <div class="row g-1 mb-1 align-items-center">
                       <div class="col-4">
                         <label class="form-label small mb-0">Back Gap</label>
@@ -380,7 +489,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.back.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.leftWallGaps.back.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -404,7 +516,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.left.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.leftWallGaps.left.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -428,7 +543,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.leftWallGaps.right.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.leftWallGaps.right.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -441,11 +559,15 @@
 
                   <!-- Right Side Configuration -->
                   <div class="border rounded p-2 mb-3 bg-light">
-                    <h6 class="text-info small mb-2">Right Side Configuration</h6>
-                    
+                    <h6 class="text-info small mb-2">
+                      Right Side Configuration
+                    </h6>
+
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Floors (Y_position)</label>
+                        <label class="form-label small mb-0"
+                          >Number of Floors (Y_position)</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -462,7 +584,9 @@
 
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Rows (X_position)</label>
+                        <label class="form-label small mb-0"
+                          >Number of Rows (X_position)</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -478,7 +602,9 @@
 
                     <div class="row g-2 mb-2 align-items-center">
                       <div class="col-6">
-                        <label class="form-label small mb-0">Number of Aisles</label>
+                        <label class="form-label small mb-0"
+                          >Number of Aisles</label
+                        >
                       </div>
                       <div class="col-6">
                         <input
@@ -493,55 +619,152 @@
                       </div>
                     </div>
 
-                    <div class="row g-2 mb-2 align-items-center">
-                      <div class="col-6">
-                        <label class="form-label small mb-0">Number of Deep </label>
-                      </div>
-                      <div class="col-6">
-                        <input
-                          type="number"
-                          class="form-control form-control-sm"
-                          [(ngModel)]="workstation.right_side_config.depth"
-                          min="1"
-                          max="20"
-                          step="1"
-                          (blur)="onSideConfigChange(i, 'right')"
-                        />
+                    <!-- Dynamic Aisle Configuration - Appears when num_aisles > 0 -->
+                    <div *ngIf="workstation.right_side_config.num_aisles > 0">
+                      <div class="accordion" id="rightAislesAccordion{{ i }}">
+                        <div class="accordion-item">
+                          <h2 class="accordion-header">
+                            <button
+                              class="accordion-button"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              [attr.data-bs-target]="'#rightAislesCollapse' + i"
+                            >
+                              Aisle Configuration
+                            </button>
+                          </h2>
+                          <div
+                            [id]="'rightAislesCollapse' + i"
+                            class="accordion-collapse collapse show"
+                          >
+                            <div class="accordion-body p-2">
+                              <!-- Number of Deep -->
+                              <div class="row g-2 mb-3 align-items-center">
+                                <div class="col-6">
+                                  <label class="form-label small mb-0"
+                                    >Number of Deep</label
+                                  >
+                                </div>
+                                <div class="col-6">
+                                  <input
+                                    type="number"
+                                    class="form-control form-control-sm"
+                                    [(ngModel)]="
+                                      workstation.right_side_config.depth
+                                    "
+                                    min="1"
+                                    max="20"
+                                    step="1"
+                                    (blur)="onSideConfigChange(i, 'right')"
+                                  />
+                                </div>
+                              </div>
+
+                              <!-- Dynamic Deep Gaps - Appears when depth > 1 -->
+                              <div
+                                *ngIf="workstation.right_side_config.depth > 1"
+                              >
+                                <h6 class="text-info small mt-2 mb-1">
+                                  Deep Gaps
+                                </h6>
+                                <div
+                                  *ngFor="
+                                    let gapIndex of getDeepGapArray(
+                                      workstation.right_side_config.depth
+                                    );
+                                    let j = index
+                                  "
+                                  class="row g-1 mb-1 align-items-center"
+                                >
+                                  <div class="col-5">
+                                    <label class="form-label small mb-0"
+                                      >Gap {{ j + 1 }}-{{ j + 2 }}</label
+                                    >
+                                  </div>
+                                  <div class="col-4">
+                                    <input
+                                      type="number"
+                                      class="form-control form-control-sm"
+                                      [(ngModel)]="
+                                        workstation.right_side_config.deep_gaps[
+                                          j
+                                        ]
+                                      "
+                                      min="0"
+                                      step="any"
+                                    />
+                                  </div>
+                                  <div class="col-3">
+                                    <span
+                                      class="form-control-plaintext form-control-sm text-muted"
+                                    >
+                                      {{
+                                        workstation.right_side_config
+                                          .wall_gap_unit
+                                      }}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div
+                                class="alert alert-info py-2 px-2 mb-0 small"
+                              >
+                                <strong>Total Locations:</strong>
+                                {{ workstation.right_side_config.num_rows }} ×
+                                {{ workstation.right_side_config.num_floors }} ×
+                                {{ workstation.right_side_config.depth }} =
+                                {{
+                                  workstation.right_side_config.num_rows *
+                                    workstation.right_side_config.num_floors *
+                                    workstation.right_side_config.depth
+                                }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div class="alert alert-info py-2 px-2 mb-2 small">
-                      <strong>Total Locations:</strong> 
-                      {{ workstation.right_side_config.num_rows }} × {{ workstation.right_side_config.num_floors }} × {{ workstation.right_side_config.depth }} × {{ workstation.right_side_config.num_aisles }} = 
-                      {{ workstation.right_side_config.num_rows * workstation.right_side_config.num_floors * workstation.right_side_config.depth * workstation.right_side_config.num_aisles }}
-                    </div>
-
-                    <div *ngIf="workstation.right_side_config.custom_gaps.length > 0">
+                    <!-- Aisle Gaps - Appears when num_aisles > 1 -->
+                    <div *ngIf="workstation.right_side_config.num_aisles > 1">
                       <h6 class="text-info small mt-2 mb-1">Aisle Gaps</h6>
                       <div
-                        *ngFor="let gap of workstation.right_side_config.custom_gaps; let j = index; taisleBy: taisleByGapIndex"
+                        *ngFor="
+                          let gapIndex of getAisleGapArray(
+                            workstation.right_side_config.num_aisles
+                          );
+                          let j = index
+                        "
                         class="row g-1 mb-1 align-items-center"
                       >
                         <div class="col-5">
-                          <label class="form-label small mb-0">Gap {{ j + 1 }}-{{ j + 2 }}</label>
+                          <label class="form-label small mb-0"
+                            >Gap {{ j + 1 }}-{{ j + 2 }}</label
+                          >
                         </div>
                         <div class="col-4">
                           <input
                             type="number"
                             class="form-control form-control-sm"
-                            [(ngModel)]="workstation.right_side_config.custom_gaps[j]"
+                            [(ngModel)]="
+                              workstation.right_side_config.aisle_gaps[j]
+                            "
                             min="0"
                             step="any"
                           />
                         </div>
                         <div class="col-3">
-                          <span class="form-control-plaintext form-control-sm text-muted">
+                          <span
+                            class="form-control-plaintext form-control-sm text-muted"
+                          >
                             {{ workstation.right_side_config.wall_gap_unit }}
                           </span>
                         </div>
                       </div>
                     </div>
 
+                    <!-- Wall Gaps -->
                     <h6 class="text-info small mt-2 mb-1">Wall Gaps</h6>
                     <div class="row g-1 mb-1 align-items-center">
                       <div class="col-4">
@@ -557,7 +780,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.front.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.rightWallGaps.front.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -567,6 +793,7 @@
                       </div>
                     </div>
 
+                    <!-- Rest of wall gaps remain the same -->
                     <div class="row g-1 mb-1 align-items-center">
                       <div class="col-4">
                         <label class="form-label small mb-0">Back Gap</label>
@@ -581,7 +808,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.back.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.rightWallGaps.back.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -605,7 +835,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.left.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.rightWallGaps.left.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -629,7 +862,10 @@
                         />
                       </div>
                       <div class="col-4">
-                        <select class="form-select form-select-sm" [(ngModel)]="workstation.rightWallGaps.right.unit">
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="workstation.rightWallGaps.right.unit"
+                        >
                           <option value="cm">cm</option>
                           <option value="m">m</option>
                           <option value="mm">mm</option>
@@ -637,146 +873,146 @@
                           <option value="in">in</option>
                         </select>
                       </div>
-                    </div>
-                  </div>
 
-                  <!-- Pallet Configuration Section -->
-                  <div class="pallet-config-section">
-                    <div
-                      class="d-flex justify-content-between align-items-center mb-3"
-                    >
-                      <h6 class="section-title text-success mb-0">
-                        <i class="fas fa-pallet me-2"></i>Pallet Configuration
-                      </h6>
-                      <div>
-                        <span class="badge bg-success me-2">
-                          {{
-                            getTotalPalletsWeight(workstation)
-                              | number : "1.0-0"
-                          }}
-                          kg
-                        </span>
-                        <button
-                          class="btn btn-success btn-sm"
-                          (click)="addPallet(i)"
+                      <!-- Pallet Configuration Section -->
+                      <div class="pallet-config-section">
+                        <div
+                          class="d-flex justify-content-between align-items-center mb-3"
                         >
-                          <i class="fas fa-plus me-1"></i>Add Pallet
-                        </button>
+                          <h6 class="section-title text-success mb-0">
+                            <i class="fas fa-pallet me-2"></i>Pallet
+                            Configuration
+                          </h6>
+                          <div>
+                            <span class="badge bg-success me-2">
+                              {{
+                                getTotalPalletsWeight(workstation)
+                                  | number : "1.0-0"
+                              }}
+                              kg
+                            </span>
+                            <button
+                              class="btn btn-success btn-sm"
+                              (click)="addPallet(i)"
+                            >
+                              <i class="fas fa-plus me-1"></i>Add Pallet
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Pallet List -->
+                        <div
+                          class="pallets-list"
+                          *ngIf="workstation.pallets.length > 0"
+                        >
+                          <app-pallet-config
+                            *ngFor="
+                              let pallet of workstation.pallets;
+                              let pIndex = index;
+                              taisleBy: taisleByPalletIndex
+                            "
+                            [pallet]="pallet"
+                            [palletIndex]="pIndex"
+                            [workstationIndex]="i"
+                            [maxFloors]="getMaxFloors(workstation)"
+                            [maxRows]="getMaxRows(workstation)"
+                            [maxAisles]="getMaxAisles(workstation)"
+                            [maxDepth]="getMaxDepth(workstation)"
+                            (palletChange)="onPalletChange(i, pIndex, $event)"
+                            (removePallet)="removePallet(i, pIndex)"
+                          >
+                          </app-pallet-config>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div
+                          *ngIf="workstation.pallets.length === 0"
+                          class="empty-state text-center py-4"
+                        >
+                          <i class="fas fa-pallet fa-3x text-muted mb-3"></i>
+                          <p class="text-muted mb-0">
+                            No pallets added yet. Click "Add Pallet" to start.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-
-                    <!-- Pallet List -->
-                    <div
-                      class="pallets-list"
-                      *ngIf="workstation.pallets.length > 0"
-                    >
-                      <app-pallet-config
-                        *ngFor="
-                          let pallet of workstation.pallets;
-                          let pIndex = index;
-                          taisleBy: taisleByPalletIndex
-                        "
-                        [pallet]="pallet"
-                        [palletIndex]="pIndex"
-                        [workstationIndex]="i"
-                        [maxFloors]="getMaxFloors(workstation)"
-                        [maxRows]="getMaxRows(workstation)"
-                        [maxAisles]="getMaxAisles(workstation)"
-                        [maxDepth]="getMaxDepth(workstation)"
-                        (palletChange)="onPalletChange(i, pIndex, $event)"
-                        (removePallet)="removePallet(i, pIndex)"
-                      >
-                      </app-pallet-config>
-                    </div>
-
-                    <!-- Empty State -->
-                    <div
-                      *ngIf="workstation.pallets.length === 0"
-                      class="empty-state text-center py-4"
-                    >
-                      <i class="fas fa-pallet fa-3x text-muted mb-3"></i>
-                      <p class="text-muted mb-0">
-                        No pallets added yet. Click "Add Pallet" to start.
-                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Controls -->
-      <div class="card mb-3">
-        <div class="card-header bg-primary text-white">
-          <h6 class="mb-0">Controls</h6>
-        </div>
-        <div class="card-body">
-          <div class="d-grid gap-2">
-            <div class="btn-group" role="group">
-              <button
-                type="button"
-                class="btn"
-                [class.btn-primary]="is3DView"
-                [class.btn-outline-primary]="!is3DView"
-                (click)="is3DView = true"
-              >
-                3D View
-              </button>
-              <button
-                type="button"
-                class="btn"
-                [class.btn-primary]="!is3DView"
-                [class.btn-outline-primary]="is3DView"
-                (click)="is3DView = false"
-              >
-                2D View
-              </button>
+          <!-- Controls -->
+          <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0">Controls</h6>
             </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <div class="btn-group" role="group">
+                  <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="is3DView"
+                    [class.btn-outline-primary]="!is3DView"
+                    (click)="is3DView = true"
+                  >
+                    3D View
+                  </button>
+                  <button
+                    type="button"
+                    class="btn"
+                    [class.btn-primary]="!is3DView"
+                    [class.btn-outline-primary]="is3DView"
+                    (click)="is3DView = false"
+                  >
+                    2D View
+                  </button>
+                </div>
 
-            <button class="btn btn-success" (click)="generateLayout()">
-              Generate Layout
-            </button>
+                <button class="btn btn-success" (click)="generateLayout()">
+                  Generate Layout
+                </button>
 
-            <button class="btn btn-warning" (click)="validateConfig()">
-              Validate Configuration
-            </button>
+                <button class="btn btn-warning" (click)="validateConfig()">
+                  Validate Configuration
+                </button>
 
-            <button class="btn btn-danger" (click)="clearVisualization()">
-              Clear Visualization
-            </button>
+                <button class="btn btn-danger" (click)="clearVisualization()">
+                  Clear Visualization
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="card">
+            <div class="card-body">
+              <div class="small text-muted">
+                <strong>Status:</strong>
+                <span [class]="statusClass">{{ statusMessage }}</span>
+                <br />
+                <strong>Workstations:</strong>
+                {{ warehouseConfig.num_workstations }}
+                <br />
+                <strong>Total Pallets:</strong> {{ getTotalPallets() }}
+              </div>
           </div>
         </div>
       </div>
-
-      <!-- Status -->
-      <div class="card">
-        <div class="card-body">
-          <div class="small text-muted">
-            <strong>Status:</strong>
-            <span [class]="statusClass">{{ statusMessage }}</span>
-            <br />
-            <strong>Workstations:</strong>
-            {{ warehouseConfig.num_workstations }}
-            <br />
-            <strong>Total Pallets:</strong> {{ getTotalPallets() }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Panel - Visualization -->
-    <div class="col-md-8 p-0">
-      <app-visualization
-        [warehouseConfig]="warehouseConfig"
-        [warehouseDimensions]="warehouseDimensions"
-        [layoutData]="layoutData"
-        [is3DView]="is3DView"
-        (elementClicked)="onElementClicked($event)"
-        (palletClicked)="onPalletClicked($event)"
-      >
-      </app-visualization>
     </div>
   </div>
+
+      <!-- Right Panel - Visualization -->
+      <div class="col-md-8 p-0">
+        <app-visualization
+          [warehouseConfig]="warehouseConfig"
+          [warehouseDimensions]="warehouseDimensions"
+          [layoutData]="layoutData"
+          [is3DView]="is3DView"
+          (elementClicked)="onElementClicked($event)"
+          (palletClicked)="onPalletClicked($event)"
+        >
+        </app-visualization>
+      </div>
 </div>
